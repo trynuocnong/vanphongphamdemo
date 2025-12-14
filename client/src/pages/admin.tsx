@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Redirect } from "wouter";
-import { Check, X, Plus, Search, Trash2, Edit, AlertCircle, Eye, RefreshCw } from "lucide-react";
+import { Check, X, Plus, Search, Trash2, Edit, AlertCircle, Eye, RefreshCw, Star, MessageSquare } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,8 @@ export default function Admin() {
     addProduct, deleteProduct, updateProduct, 
     addCategory, updateCategory, deleteCategory,
     addVoucher, updateVoucher, deleteVoucher,
-    respondToOffer, updateOrderStatus, updateUser, deleteUser
+    respondToOffer, updateOrderStatus, updateUser, deleteUser,
+    deleteFeedback
   } = useStore();
   
   const [activeTab, setActiveTab] = useState("overview");
@@ -41,13 +42,14 @@ export default function Admin() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 h-auto">
+        <TabsList className="grid grid-cols-2 md:grid-cols-7 h-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="offers">Offers</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="vouchers">Vouchers</TabsTrigger>
+          <TabsTrigger value="feedbacks">Feedbacks</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -78,6 +80,10 @@ export default function Admin() {
 
         <TabsContent value="vouchers">
            <VouchersTab vouchers={vouchers} addVoucher={addVoucher} deleteVoucher={deleteVoucher} updateVoucher={updateVoucher} />
+        </TabsContent>
+
+        <TabsContent value="feedbacks">
+           <FeedbacksTab products={products} deleteFeedback={deleteFeedback} />
         </TabsContent>
       </Tabs>
     </div>
@@ -471,21 +477,67 @@ function OffersTab({ offers, respondToOffer }: any) {
 
 function UsersTab({ users, updateUser, deleteUser }: any) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const filteredUsers = users.filter((u: any) => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const data = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      role: formData.get("role"),
+      points: parseInt(formData.get("points") as string)
+    };
+    updateUser(editingUser.id, data);
+    setIsDialogOpen(false);
+    setEditingUser(null);
+  };
+
   return (
     <Card>
        <CardHeader className="flex flex-row justify-between items-center">
          <CardTitle>User Management</CardTitle>
-         <Input 
-           className="w-[200px]" 
-           placeholder="Search users..." 
-           value={searchTerm} 
-           onChange={e => setSearchTerm(e.target.value)} 
-         />
+         <div className="flex gap-2">
+           <Input 
+             className="w-[200px]" 
+             placeholder="Search users..." 
+             value={searchTerm} 
+             onChange={e => setSearchTerm(e.target.value)} 
+           />
+           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Edit User</DialogTitle></DialogHeader>
+                <form onSubmit={handleUpdate} className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Name</Label>
+                    <Input name="name" defaultValue={editingUser?.name} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input name="email" defaultValue={editingUser?.email} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <select name="role" className="w-full h-10 px-3 rounded-md border" defaultValue={editingUser?.role}>
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Points</Label>
+                    <Input name="points" type="number" defaultValue={editingUser?.points} />
+                  </div>
+                  <DialogFooter><Button type="submit">Save Changes</Button></DialogFooter>
+                </form>
+              </DialogContent>
+           </Dialog>
+         </div>
        </CardHeader>
        <CardContent>
          <Table>
@@ -516,6 +568,9 @@ function UsersTab({ users, updateUser, deleteUser }: any) {
                         className={u.isBlocked ? "text-green-600" : "text-red-600"}
                      >
                        {u.isBlocked ? "Unblock" : "Block"}
+                     </Button>
+                     <Button variant="ghost" size="sm" onClick={() => { setEditingUser(u); setIsDialogOpen(true); }}>
+                       <Edit className="w-4 h-4" />
                      </Button>
                      <Button variant="ghost" size="sm" onClick={() => deleteUser(u.id)}>
                        <Trash2 className="w-4 h-4 text-muted-foreground" />
@@ -635,4 +690,60 @@ function VouchersTab({ vouchers, addVoucher, deleteVoucher, updateVoucher }: any
       </CardContent>
     </Card>
   )
+}
+
+function FeedbacksTab({ products, deleteFeedback }: any) {
+  // Flatten feedbacks from all products
+  const allFeedbacks = products.flatMap((p: any) => 
+    p.feedbacks.map((f: any) => ({ ...f, productName: p.name, productId: p.id }))
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Customer Reviews</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Rating</TableHead>
+              <TableHead>Comment</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {allFeedbacks.map((f: any) => (
+              <TableRow key={f.id}>
+                <TableCell className="font-medium">{f.productName}</TableCell>
+                <TableCell>{f.user}</TableCell>
+                <TableCell>
+                  <div className="flex text-yellow-500">
+                    {[...Array(5)].map((_, i) => (
+                       <Star key={i} className={`w-3 h-3 ${i < f.rating ? "fill-current" : "text-gray-300"}`} />
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate">{f.comment}</TableCell>
+                <TableCell>{f.date}</TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="sm" onClick={() => deleteFeedback(f.productId, f.id)}>
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {allFeedbacks.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-4">No reviews yet.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
 }

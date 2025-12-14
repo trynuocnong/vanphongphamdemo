@@ -5,16 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Package, Gift, User as UserIcon, Lock, MapPin, Phone } from "lucide-react";
-import { Redirect } from "wouter";
+import { Package, Gift, User as UserIcon, Lock, MapPin, Phone, Star } from "lucide-react";
+import { Redirect, Link } from "wouter";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Profile() {
-  const { user, updateUser, orders, offers, vouchers, redeemVoucher } = useStore();
+  const { user, updateUser, orders, offers, vouchers, redeemVoucher, addFeedback } = useStore();
   const { toast } = useToast();
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [reviewProduct, setReviewProduct] = useState<any>(null); // Product to review
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
 
   if (!user) return <Redirect to="/login" />;
 
@@ -40,6 +45,15 @@ export default function Profile() {
       toast({ title: "Password changed successfully" });
     } else {
       toast({ title: "Incorrect current password", variant: "destructive" });
+    }
+  };
+
+  const handleSubmitReview = () => {
+    if (reviewProduct) {
+      addFeedback(reviewProduct.productId, rating, comment);
+      setReviewProduct(null);
+      setRating(5);
+      setComment("");
     }
   };
 
@@ -90,9 +104,23 @@ export default function Profile() {
                     </div>
                     <div className="space-y-2">
                       {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-sm">
-                          <span>{item.quantity}x {item.name}</span>
-                          <span>{(item.price * item.quantity).toLocaleString()}đ</span>
+                        <div key={idx} className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2">
+                             <span>{item.quantity}x {item.name}</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                             <span>{(item.price * item.quantity).toLocaleString()}đ</span>
+                             {order.status === "completed" && (
+                               <Button 
+                                 size="sm" 
+                                 variant="outline" 
+                                 className="h-7 text-xs"
+                                 onClick={() => setReviewProduct(item)}
+                               >
+                                 Review
+                               </Button>
+                             )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -267,6 +295,43 @@ export default function Profile() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Review Dialog */}
+      <Dialog open={!!reviewProduct} onOpenChange={(open) => !open && setReviewProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Write a Review</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Reviewing: <strong>{reviewProduct?.name}</strong>
+            </p>
+            <div className="space-y-2">
+               <label className="text-sm font-medium">Rating</label>
+               <div className="flex gap-2">
+                 {[1, 2, 3, 4, 5].map((star) => (
+                   <Star 
+                     key={star} 
+                     className={`w-6 h-6 cursor-pointer ${star <= rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}`}
+                     onClick={() => setRating(star)}
+                   />
+                 ))}
+               </div>
+            </div>
+            <div className="space-y-2">
+               <label className="text-sm font-medium">Comment</label>
+               <Textarea 
+                 placeholder="Tell us what you liked..." 
+                 value={comment}
+                 onChange={(e) => setComment(e.target.value)}
+               />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSubmitReview}>Submit Review</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

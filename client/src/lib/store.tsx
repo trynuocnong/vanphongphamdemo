@@ -49,6 +49,11 @@ interface StoreContextType {
 
   updateOrderStatus: (orderId: string, status: Order["status"]) => void;
   checkOfferBlock: (userId: string, productId: string) => boolean;
+
+  // Feedback
+  addFeedback: (productId: string, rating: number, comment: string) => void;
+  deleteFeedback: (productId: string, feedbackId: string) => void;
+  hasPurchased: (productId: string) => boolean;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -361,6 +366,53 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toast({ title: `Order marked as ${status}` });
   };
 
+  // Feedback
+  const hasPurchased = (productId: string) => {
+    if (!user) return false;
+    // Check if user has a completed order containing this product
+    return orders.some(o => 
+      o.userId === user.id && 
+      o.status === "completed" && 
+      o.items.some(i => i.productId === productId)
+    );
+  };
+
+  const addFeedback = (productId: string, rating: number, comment: string) => {
+    if (!user) return;
+    setProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        return {
+          ...p,
+          feedbacks: [
+            ...p.feedbacks,
+            {
+              id: Math.random().toString(36).substr(2, 9),
+              user: user.name,
+              rating,
+              comment,
+              date: new Date().toISOString().split('T')[0]
+            }
+          ]
+        };
+      }
+      return p;
+    }));
+    toast({ title: "Review submitted", description: "Thank you for your feedback!" });
+  };
+
+  const deleteFeedback = (productId: string, feedbackId: string) => {
+    setProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        return {
+          ...p,
+          feedbacks: p.feedbacks.filter(f => f.id !== feedbackId)
+        };
+      }
+      return p;
+    }));
+    toast({ title: "Feedback deleted" });
+  };
+
   return (
     <StoreContext.Provider
       value={{
@@ -395,7 +447,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         updateVoucher,
         deleteVoucher,
         updateOrderStatus,
-        checkOfferBlock
+        checkOfferBlock,
+        addFeedback,
+        deleteFeedback,
+        hasPurchased
       }}
     >
       {children}
