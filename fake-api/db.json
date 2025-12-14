@@ -6,13 +6,7 @@
       "email": "admin@example.com",
       "password": "123",
       "role": "admin"
-    }
-  ],
-  "products": [],
-  "carts": [],
-  "orders": []
-}
-,
+    },
     {
       "id": "de42",
       "name": "Tu",
@@ -23,7 +17,6 @@
   ],
   "products": [
     {
-      "id": "1",
       "name": "Bút bi Thiên Long",
       "price": 5000,
       "offerPrice": 4000,

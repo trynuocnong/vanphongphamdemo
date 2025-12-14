@@ -15,6 +15,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useEffect } from "react";
+import { getProducts, addProduct, updateProduct, deleteProduct } from "../services/productService";
+
+
 
 export default function Admin() {
   const { 
@@ -31,7 +35,37 @@ export default function Admin() {
   const { toast } = useToast();
 
   if (role !== "admin") return <Redirect to="/login" />;
+// CRUD functions with fake API
+ const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const data = {
+      name: formData.get("name"),
+      price: Number(formData.get("price")),
+      stock: Number(formData.get("stock")),
+      description: formData.get("description"),
+    };
 
+    if (editProduct) {
+      await updateProduct(editProduct.id, data);
+    } else {
+      await addProduct(data);
+    }
+
+    setIsDialogOpen(false);
+    setEditProduct(null);
+    loadProducts(); // Refresh lại state
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteProduct(id);
+    loadProducts(); // Refresh lại state
+  };
+
+  const handleUpdateUser = async (id:string,data:any)=>{
+    await updateUser(id,data);
+    setUsers(users.map(u=>u.id===id?{...u,...data}:u));
+  };
   return (
     <div className="container px-4 py-10">
       <div className="flex justify-between items-center mb-8">
@@ -249,39 +283,63 @@ function OrdersTab({ orders, updateStatus }: { orders: any[], updateStatus: any 
   );
 }
 
-function ProductsTab({ products, categories, addProduct, updateProduct, deleteProduct }: any) {
+function ProductsTab({ categories }: any) {
+  const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editProduct, setEditProduct] = useState<any>(null); // If null -> Add mode, else Edit mode
+  const [editProduct, setEditProduct] = useState<any>(null);
 
-  const filteredProducts = products.filter((p: any) => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Load products khi component mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const fetchProducts = async () => {
+    const data = await getProducts();
+    setProducts(data);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = {
       name: formData.get("name"),
-      price: parseInt(formData.get("price") as string),
-      stock: parseInt(formData.get("stock") as string),
+      price: Number(formData.get("price")),
+      stock: Number(formData.get("stock")),
       description: formData.get("description"),
       categoryId: formData.get("categoryId"),
       categoryName: categories.find((c: any) => c.id === formData.get("categoryId"))?.name || "Unknown",
       allowOffers: formData.get("allowOffers") === "on",
-      autoAcceptPrice: formData.get("autoAcceptPrice") ? parseInt(formData.get("autoAcceptPrice") as string) : undefined,
-      autoRejectPrice: formData.get("autoRejectPrice") ? parseInt(formData.get("autoRejectPrice") as string) : undefined,
+      autoAcceptPrice: formData.get("autoAcceptPrice") ? Number(formData.get("autoAcceptPrice")) : undefined,
+      autoRejectPrice: formData.get("autoRejectPrice") ? Number(formData.get("autoRejectPrice")) : undefined,
+      image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
     };
 
     if (editProduct) {
-      updateProduct(editProduct.id, data);
+      const updated = await updateProduct(editProduct.id, data);
+      setProducts(prev => prev.map(p => p.id === updated.id ? updated : p));
     } else {
-      addProduct({ ...data, image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800", images: [] });
+      const created = await addProduct(data);
+      setProducts(prev => [...prev, created]);
     }
+
     setIsDialogOpen(false);
     setEditProduct(null);
   };
 
+  const handleDelete = async (id: string) => {
+    const ok = await deleteProduct(id);
+    if (ok) {
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } else {
+      console.error("Delete failed");
+    }
+  };
+
+
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -384,9 +442,14 @@ function ProductsTab({ products, categories, addProduct, updateProduct, deletePr
                       <Edit className="w-4 h-4" />
                     </Button>
                     {!p.isDeleted && (
-                       <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteProduct(p.id)}>
-                         <Trash2 className="w-4 h-4" />
-                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     )}
                   </div>
                 </TableCell>
