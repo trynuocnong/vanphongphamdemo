@@ -1,0 +1,37 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Tu",
+      "email": "admin@example.com",
+      "password": "123",
+      "role": "admin"
+    }
+  ],
+  "products": [],
+  "carts": [],
+  "orders": []
+}
+,
+    {
+      "id": "de42",
+      "name": "Tu",
+      "email": "user@example.com",
+      "password": "123",
+      "role": "user"
+    }
+  ],
+  "products": [
+    {
+      "id": "1",
+      "name": "Bút bi Thiên Long",
+      "price": 5000,
+      "offerPrice": 4000,
+      "category": "Bút",
+      "stock": 100,
+      "image": "/images/pen.jpg"
+    }
+  ],
+  "carts": [],
+  "orders": []
+}

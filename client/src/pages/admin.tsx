@@ -25,11 +25,12 @@ export default function Admin() {
     respondToOffer, updateOrderStatus, updateUser, deleteUser,
     deleteFeedback
   } = useStore();
-  
+  const role = localStorage.getItem("userRole");
+
   const [activeTab, setActiveTab] = useState("overview");
   const { toast } = useToast();
 
-  if (!user || user.role !== "admin") return <Redirect to="/login" />;
+  if (role !== "admin") return <Redirect to="/login" />;
 
   return (
     <div className="container px-4 py-10">
