@@ -22,7 +22,7 @@ export default function Admin() {
     addProduct, deleteProduct, updateProduct, 
     addCategory, updateCategory, deleteCategory,
     addVoucher, updateVoucher, deleteVoucher,
-    respondToOffer, updateOrderStatus, updateUser
+    respondToOffer, updateOrderStatus, updateUser, deleteUser
   } = useStore();
   
   const [activeTab, setActiveTab] = useState("overview");
@@ -73,11 +73,11 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="users">
-           <UsersTab users={users} updateUser={updateUser} />
+           <UsersTab users={users} updateUser={updateUser} deleteUser={deleteUser} />
         </TabsContent>
 
         <TabsContent value="vouchers">
-           <VouchersTab vouchers={vouchers} addVoucher={addVoucher} deleteVoucher={deleteVoucher} />
+           <VouchersTab vouchers={vouchers} addVoucher={addVoucher} deleteVoucher={deleteVoucher} updateVoucher={updateVoucher} />
         </TabsContent>
       </Tabs>
     </div>
@@ -469,10 +469,24 @@ function OffersTab({ offers, respondToOffer }: any) {
   );
 }
 
-function UsersTab({ users, updateUser }: any) {
+function UsersTab({ users, updateUser, deleteUser }: any) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const filteredUsers = users.filter((u: any) => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Card>
-       <CardHeader><CardTitle>User Management</CardTitle></CardHeader>
+       <CardHeader className="flex flex-row justify-between items-center">
+         <CardTitle>User Management</CardTitle>
+         <Input 
+           className="w-[200px]" 
+           placeholder="Search users..." 
+           value={searchTerm} 
+           onChange={e => setSearchTerm(e.target.value)} 
+         />
+       </CardHeader>
        <CardContent>
          <Table>
            <TableHeader>
@@ -486,7 +500,7 @@ function UsersTab({ users, updateUser }: any) {
              </TableRow>
            </TableHeader>
            <TableBody>
-             {users.map((u: any) => (
+             {filteredUsers.map((u: any) => (
                <TableRow key={u.id}>
                  <TableCell>{u.name}</TableCell>
                  <TableCell>{u.email}</TableCell>
@@ -494,14 +508,19 @@ function UsersTab({ users, updateUser }: any) {
                  <TableCell>{u.points}</TableCell>
                  <TableCell>{u.isBlocked ? <span className="text-red-500">Blocked</span> : <span className="text-green-500">Active</span>}</TableCell>
                  <TableCell>
-                   <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => updateUser(u.id, { isBlocked: !u.isBlocked })}
-                      className={u.isBlocked ? "text-green-600" : "text-red-600"}
-                   >
-                     {u.isBlocked ? "Unblock" : "Block"}
-                   </Button>
+                   <div className="flex gap-2">
+                     <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => updateUser(u.id, { isBlocked: !u.isBlocked })}
+                        className={u.isBlocked ? "text-green-600" : "text-red-600"}
+                     >
+                       {u.isBlocked ? "Unblock" : "Block"}
+                     </Button>
+                     <Button variant="ghost" size="sm" onClick={() => deleteUser(u.id)}>
+                       <Trash2 className="w-4 h-4 text-muted-foreground" />
+                     </Button>
+                   </div>
                  </TableCell>
                </TableRow>
              ))}
@@ -512,14 +531,74 @@ function UsersTab({ users, updateUser }: any) {
   )
 }
 
-function VouchersTab({ vouchers, addVoucher, deleteVoucher }: any) {
-  // Simple view for vouchers CRUD
+function VouchersTab({ vouchers, addVoucher, deleteVoucher, updateVoucher }: any) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editVoucher, setEditVoucher] = useState<any>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const data = {
+       code: formData.get("code"),
+       discount: parseInt(formData.get("discount") as string),
+       minSpend: parseInt(formData.get("minSpend") as string),
+       pointCost: parseInt(formData.get("pointCost") as string),
+       description: formData.get("description"),
+       detailedConditions: formData.get("detailedConditions")
+    };
+
+    if (editVoucher) {
+       updateVoucher(editVoucher.id, data);
+    } else {
+       addVoucher(data);
+    }
+    setIsDialogOpen(false);
+    setEditVoucher(null);
+  };
+
   return (
     <Card>
-      <CardHeader className="flex flex-row justify-between">
+      <CardHeader className="flex flex-row justify-between items-center">
          <CardTitle>Vouchers</CardTitle>
-         {/* Add Voucher Dialog would go here similar to Products */}
-         <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Add Voucher</Button>
+         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+               <Button size="sm" onClick={() => setEditVoucher(null)}><Plus className="w-4 h-4 mr-2" /> Add Voucher</Button>
+            </DialogTrigger>
+            <DialogContent>
+               <DialogHeader><DialogTitle>{editVoucher ? "Edit Voucher" : "Add Voucher"}</DialogTitle></DialogHeader>
+               <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <Label>Code</Label>
+                       <Input name="code" defaultValue={editVoucher?.code} required />
+                    </div>
+                    <div className="space-y-2">
+                       <Label>Discount Amount</Label>
+                       <Input name="discount" type="number" defaultValue={editVoucher?.discount} required />
+                    </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <Label>Min Spend</Label>
+                       <Input name="minSpend" type="number" defaultValue={editVoucher?.minSpend} required />
+                    </div>
+                    <div className="space-y-2">
+                       <Label>Point Cost</Label>
+                       <Input name="pointCost" type="number" defaultValue={editVoucher?.pointCost} required />
+                    </div>
+                 </div>
+                 <div className="space-y-2">
+                    <Label>Short Description</Label>
+                    <Input name="description" defaultValue={editVoucher?.description} />
+                 </div>
+                 <div className="space-y-2">
+                    <Label>Conditions</Label>
+                    <Input name="detailedConditions" defaultValue={editVoucher?.detailedConditions} />
+                 </div>
+                 <DialogFooter><Button type="submit">{editVoucher ? "Update" : "Create"}</Button></DialogFooter>
+               </form>
+            </DialogContent>
+         </Dialog>
       </CardHeader>
       <CardContent>
          <Table>
@@ -540,7 +619,14 @@ function VouchersTab({ vouchers, addVoucher, deleteVoucher }: any) {
                  <TableCell>{v.minSpend.toLocaleString()}đ</TableCell>
                  <TableCell>{v.pointCost}</TableCell>
                  <TableCell>
-                   <Button variant="ghost" size="sm" onClick={() => deleteVoucher(v.id)}><Trash2 className="w-4 h-4" /></Button>
+                   <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => { setEditVoucher(v); setIsDialogOpen(true); }}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => deleteVoucher(v.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                   </div>
                  </TableCell>
                </TableRow>
              ))}

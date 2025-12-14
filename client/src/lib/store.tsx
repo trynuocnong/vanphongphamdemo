@@ -21,8 +21,11 @@ interface StoreContextType {
   offers: Offer[];
   vouchers: Voucher[];
   login: (email: string, role: "user" | "admin") => boolean;
+  register: (user: Omit<User, "id" | "points" | "vouchers" | "role">) => void;
+  resetPassword: (email: string) => void;
   logout: () => void;
   updateUser: (id: string, data: Partial<User>) => void;
+  deleteUser: (id: string) => void;
   addToCart: (product: Product, quantity: number, priceOverride?: number) => void;
   removeFromCart: (productId: string) => void;
   updateCartQuantity: (productId: string, quantity: number) => void;
@@ -45,6 +48,7 @@ interface StoreContextType {
   deleteVoucher: (id: string) => void;
 
   updateOrderStatus: (orderId: string, status: Order["status"]) => void;
+  checkOfferBlock: (userId: string, productId: string) => boolean;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -64,11 +68,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // Simple mock login
     const foundUser = users.find(u => u.email === email && u.role === role);
     if (foundUser) {
+      if (foundUser.isBlocked) {
+        toast({ title: "Account Blocked", description: "Please contact support.", variant: "destructive" });
+        return false;
+      }
       setUser(foundUser);
       toast({ title: `Logged in as ${role}` });
       return true;
     }
     return false;
+  };
+
+  const register = (userData: Omit<User, "id" | "points" | "vouchers" | "role">) => {
+    const newUser: User = {
+      ...userData,
+      id: Math.random().toString(36).substr(2, 9),
+      role: "user",
+      points: 0,
+      vouchers: ["v1"], // Welcome voucher
+    };
+    setUsers(prev => [...prev, newUser]);
+    toast({ title: "Account created successfully", description: "You can now login." });
+  };
+
+  const resetPassword = (email: string) => {
+    // Mock reset
+    const exists = users.find(u => u.email === email);
+    if (exists) {
+      toast({ title: "Password Reset Email Sent", description: "Check your inbox for instructions." });
+    } else {
+      toast({ title: "Email not found", variant: "destructive" });
+    }
   };
 
   const logout = () => {
@@ -83,6 +113,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setUser(prev => prev ? { ...prev, ...data } : null);
     }
     toast({ title: "User updated" });
+  };
+  
+  const deleteUser = (id: string) => {
+    setUsers(prev => prev.filter(u => u.id !== id));
+    toast({ title: "User deleted" });
   };
 
   const addToCart = (product: Product, quantity: number, priceOverride?: number) => {
@@ -128,10 +163,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     
     let total = cart.reduce((sum, item) => sum + item.priceUsed * item.quantity, 0);
     
+    // Check if any item uses an offer price - if so, voucher logic might change
+    const hasOfferPrice = cart.some(item => item.priceUsed < item.product.price);
+
     if (voucherId) {
-       const voucher = vouchers.find(v => v.id === voucherId);
-       if (voucher) {
-         total = Math.max(0, total - voucher.discount);
+       if (hasOfferPrice) {
+         toast({ title: "Voucher ignored", description: "Vouchers cannot be combined with offer prices.", variant: "destructive" });
+       } else {
+         const voucher = vouchers.find(v => v.id === voucherId);
+         if (voucher) {
+           total = Math.max(0, total - voucher.discount);
+         }
        }
     }
 
@@ -161,11 +203,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setOrders((prev) => [newOrder, ...prev]);
     setCart([]);
     
-    // Add points
+    // Add points regardless of offer usage
     const pointsEarned = Math.floor(total / 10000);
     updateUser(user.id, { points: user.points + pointsEarned });
     
     toast({ title: "Order placed successfully!", description: `You earned ${pointsEarned} points.` });
+  };
+
+  const checkOfferBlock = (userId: string, productId: string) => {
+     const rejectedCount = offers.filter(o => 
+       o.userId === userId && 
+       o.productId === productId && 
+       o.status === "rejected"
+     ).length;
+     return rejectedCount >= 5;
   };
 
   const makeOffer = (productId: string, price: number, message?: string) => {
@@ -173,6 +224,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toast({ title: "Please login first" });
       return;
     }
+
+    if (checkOfferBlock(user.id, productId)) {
+      toast({ title: "Offer Blocked", description: "You have exceeded the maximum number of rejected offers for this product.", variant: "destructive" });
+      return;
+    }
+
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
@@ -316,8 +373,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         offers,
         vouchers,
         login,
+        register,
+        resetPassword,
         logout,
         updateUser,
+        deleteUser,
         addToCart,
         removeFromCart,
         updateCartQuantity,
@@ -334,7 +394,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         addVoucher,
         updateVoucher,
         deleteVoucher,
-        updateOrderStatus
+        updateOrderStatus,
+        checkOfferBlock
       }}
     >
       {children}

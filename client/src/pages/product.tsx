@@ -15,7 +15,7 @@ import { isAfter, parseISO, addHours } from "date-fns";
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const { products, addToCart, makeOffer, user, offers } = useStore();
+  const { products, addToCart, makeOffer, user, offers, checkOfferBlock } = useStore();
   const { toast } = useToast();
   const [offerAmount, setOfferAmount] = useState("");
   const [offerMessage, setOfferMessage] = useState("");
@@ -35,6 +35,9 @@ export default function ProductDetail() {
   }) : null;
 
   const activePrice = acceptedOffer ? acceptedOffer.offerPrice : product.price;
+
+  // Check offer block status
+  const isBlocked = user ? checkOfferBlock(user.id, product.id) : false;
 
   // Related products (same category, excluding current, not deleted)
   const relatedProducts = products.filter(p => p.categoryId === product.categoryId && p.id !== product.id && !p.isDeleted).slice(0, 4);
@@ -109,6 +112,9 @@ export default function ProductDetail() {
             {acceptedOffer && (
                <p className="text-sm text-green-600">Offer price valid for 24 hours from acceptance.</p>
             )}
+            {isBlocked && (
+              <p className="text-sm text-red-600 font-bold">You are blocked from making offers on this product (Too many rejections).</p>
+            )}
           </div>
 
           <p className="text-muted-foreground leading-relaxed">
@@ -129,8 +135,13 @@ export default function ProductDetail() {
               {!acceptedOffer && product.allowOffers && product.stock > 0 && (
                 <Dialog open={isOfferOpen} onOpenChange={setIsOfferOpen}>
                   <DialogTrigger asChild>
-                    <Button size="lg" variant="outline" className="flex-1 h-12 text-lg border-primary text-primary hover:bg-primary/5">
-                      Make an Offer
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="flex-1 h-12 text-lg border-primary text-primary hover:bg-primary/5"
+                      disabled={isBlocked}
+                    >
+                      {isBlocked ? "Offer Blocked" : "Make an Offer"}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
