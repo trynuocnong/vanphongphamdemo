@@ -10,24 +10,34 @@ import { Star, Truck, ShieldCheck, RefreshCcw } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { isAfter, parseISO, addHours } from "date-fns";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { products, addToCart, makeOffer, user, offers } = useStore();
   const { toast } = useToast();
   const [offerAmount, setOfferAmount] = useState("");
+  const [offerMessage, setOfferMessage] = useState("");
   const [isOfferOpen, setIsOfferOpen] = useState(false);
 
   const product = products.find((p) => p.id === id);
 
-  if (!product) return <div className="p-10 text-center">Product not found</div>;
+  if (!product || product.isDeleted) return <div className="p-10 text-center">Product not found</div>;
 
-  // Check if user has an accepted offer for this product
-  const acceptedOffer = user ? offers.find(o => o.productId === product.id && o.userId === user.id && o.status === "accepted") : null;
+  // Check if user has an accepted offer for this product that is still valid (within 24h)
+  const acceptedOffer = user ? offers.find(o => {
+    if (o.productId === product.id && o.userId === user.id && o.status === "accepted" && o.acceptedAt) {
+      const expiryTime = addHours(parseISO(o.acceptedAt), 24);
+      return isAfter(expiryTime, new Date());
+    }
+    return false;
+  }) : null;
+
   const activePrice = acceptedOffer ? acceptedOffer.offerPrice : product.price;
 
-  // Related products (same category, excluding current)
-  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  // Related products (same category, excluding current, not deleted)
+  const relatedProducts = products.filter(p => p.categoryId === product.categoryId && p.id !== product.id && !p.isDeleted).slice(0, 4);
 
   const handleOfferSubmit = () => {
     const price = parseInt(offerAmount);
@@ -35,9 +45,10 @@ export default function ProductDetail() {
       toast({ title: "Invalid price", variant: "destructive" });
       return;
     }
-    makeOffer(product.id, price);
+    makeOffer(product.id, price, offerMessage);
     setIsOfferOpen(false);
     setOfferAmount("");
+    setOfferMessage("");
   };
 
   return (
@@ -45,8 +56,13 @@ export default function ProductDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Images */}
         <div className="space-y-4">
-          <div className="aspect-square bg-muted rounded-lg overflow-hidden border">
+          <div className="aspect-square bg-muted rounded-lg overflow-hidden border relative">
             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+            {product.stock <= 0 && (
+               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                 <span className="text-white text-2xl font-bold border-2 border-white px-4 py-2">OUT OF STOCK</span>
+               </div>
+            )}
           </div>
           <div className="grid grid-cols-4 gap-4">
             {product.images.map((img, i) => (
@@ -61,8 +77,9 @@ export default function ProductDetail() {
         <div className="space-y-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-               <Badge variant="secondary" className="capitalize">{product.category}</Badge>
-               {product.stock < 10 && <Badge variant="destructive">Low Stock: {product.stock}</Badge>}
+               <Badge variant="secondary" className="capitalize">{product.categoryName}</Badge>
+               {product.stock > 0 && product.stock < 10 && <Badge variant="destructive">Low Stock: {product.stock}</Badge>}
+               {product.stock > 10 && <Badge variant="outline" className="text-green-600 border-green-600">In Stock: {product.stock}</Badge>}
             </div>
             <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">{product.name}</h1>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -90,7 +107,7 @@ export default function ProductDetail() {
                )}
             </div>
             {acceptedOffer && (
-               <p className="text-sm text-green-600">You can purchase this item at your offered price.</p>
+               <p className="text-sm text-green-600">Offer price valid for 24 hours from acceptance.</p>
             )}
           </div>
 
@@ -100,11 +117,16 @@ export default function ProductDetail() {
 
           <div className="flex flex-col gap-4">
             <div className="flex gap-4">
-              <Button size="lg" className="flex-1 h-12 text-lg" onClick={() => addToCart(product, 1, activePrice)}>
-                {acceptedOffer ? "Buy Now at Offer Price" : "Add to Cart"}
+              <Button 
+                size="lg" 
+                className="flex-1 h-12 text-lg" 
+                onClick={() => addToCart(product, 1, activePrice)}
+                disabled={product.stock <= 0}
+              >
+                {product.stock <= 0 ? "Out of Stock" : (acceptedOffer ? "Buy Now at Offer Price" : "Add to Cart")}
               </Button>
               
-              {!acceptedOffer && (
+              {!acceptedOffer && product.allowOffers && product.stock > 0 && (
                 <Dialog open={isOfferOpen} onOpenChange={setIsOfferOpen}>
                   <DialogTrigger asChild>
                     <Button size="lg" variant="outline" className="flex-1 h-12 text-lg border-primary text-primary hover:bg-primary/5">
@@ -127,6 +149,14 @@ export default function ProductDetail() {
                           placeholder="e.g. 120000" 
                           value={offerAmount}
                           onChange={(e) => setOfferAmount(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Message (Optional)</label>
+                        <Textarea 
+                          placeholder="I really like this item..." 
+                          value={offerMessage}
+                          onChange={(e) => setOfferMessage(e.target.value)}
                         />
                       </div>
                     </div>

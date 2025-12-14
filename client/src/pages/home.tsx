@@ -5,13 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import heroImg from "@assets/generated_images/minimalist_stationery_workspace_hero.png";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 export default function Home() {
   const { products } = useStore();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const bestsellers = products.sort((a, b) => b.sold - a.sold).slice(0, 4);
-  const newArrivals = products.filter(p => p.isNew).slice(0, 4);
-  const onSale = products.filter(p => p.isSale).slice(0, 4);
+  // Filter out soft-deleted products
+  const activeProducts = products.filter(p => !p.isDeleted);
+  
+  // Filter by search
+  const filteredProducts = activeProducts.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const bestsellers = filteredProducts.sort((a, b) => b.sold - a.sold).slice(0, 4);
+  const newArrivals = filteredProducts.filter(p => p.isNew).slice(0, 4);
+  const onSale = filteredProducts.filter(p => p.isSale).slice(0, 4);
 
   return (
     <div className="space-y-16 pb-16">
@@ -32,16 +45,28 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center pt-4">
              <Button size="lg" className="bg-white text-black hover:bg-white/90 border-none">Shop Collection</Button>
-             <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/20">View Lookbook</Button>
           </div>
         </div>
       </section>
+
+      {/* Global Search Bar Section */}
+      <div className="container px-4">
+        <div className="relative max-w-xl mx-auto">
+          <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+          <Input 
+             className="pl-10 h-12 text-lg shadow-sm" 
+             placeholder="Search for notebooks, pens, organizers..." 
+             value={searchTerm}
+             onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
 
       {/* Categories Grid */}
       <section className="container px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {["Notebooks", "Writing", "Desk", "Paper"].map((cat) => (
-             <div key={cat} className="group relative aspect-square bg-muted overflow-hidden rounded-lg cursor-pointer">
+             <div key={cat} className="group relative aspect-square bg-muted overflow-hidden rounded-lg cursor-pointer" onClick={() => setSearchTerm(cat)}>
                <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-colors" />
                <div className="absolute inset-0 flex items-center justify-center">
                  <h3 className="text-xl font-serif font-medium">{cat}</h3>
@@ -51,15 +76,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Bestsellers */}
-      <ProductSection title="Bestsellers" products={bestsellers} id="bestsellers" />
-
-      {/* New Arrivals */}
-      <ProductSection title="New Arrivals" products={newArrivals} id="new" />
-      
-      {/* Sale */}
-      {onSale.length > 0 && (
-         <ProductSection title="On Sale" products={onSale} id="sale" />
+      {searchTerm ? (
+        <ProductSection title="Search Results" products={filteredProducts} id="search-results" />
+      ) : (
+        <>
+          <ProductSection title="Bestsellers" products={bestsellers} id="bestsellers" />
+          <ProductSection title="New Arrivals" products={newArrivals} id="new" />
+          {onSale.length > 0 && <ProductSection title="On Sale" products={onSale} id="sale" />}
+        </>
       )}
     </div>
   );
@@ -68,11 +92,12 @@ export default function Home() {
 function ProductSection({ title, products, id }: { title: string, products: any[], id: string }) {
   const { addToCart } = useStore();
 
+  if (products.length === 0) return null;
+
   return (
     <section id={id} className="container px-4">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl font-serif font-bold text-primary">{title}</h2>
-        <Link href="/shop" className="text-sm font-medium underline underline-offset-4">View All</Link>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
@@ -88,6 +113,7 @@ function ProductSection({ title, products, id }: { title: string, products: any[
               </Link>
               {product.isNew && <Badge className="absolute top-2 left-2 bg-primary">New</Badge>}
               {product.isSale && <Badge variant="destructive" className="absolute top-2 left-2">Sale</Badge>}
+              {product.stock <= 0 && <Badge variant="secondary" className="absolute top-2 right-2 bg-black/70 text-white">Out of Stock</Badge>}
             </CardContent>
             <CardFooter className="p-0 block">
               <div className="flex justify-between items-start mb-2">
@@ -95,7 +121,7 @@ function ProductSection({ title, products, id }: { title: string, products: any[
                    <Link href={`/product/${product.id}`}>
                     <h3 className="font-medium text-lg leading-none mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
                    </Link>
-                   <p className="text-sm text-muted-foreground capitalize">{product.category}</p>
+                   <p className="text-sm text-muted-foreground capitalize">{product.categoryName}</p>
                 </div>
                 <div className="text-right">
                   {product.originalPrice && (
@@ -107,9 +133,10 @@ function ProductSection({ title, products, id }: { title: string, products: any[
               <Button 
                 className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity" 
                 variant="outline"
+                disabled={product.stock <= 0}
                 onClick={() => addToCart(product, 1)}
               >
-                Add to Cart
+                {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
               </Button>
             </CardFooter>
           </Card>

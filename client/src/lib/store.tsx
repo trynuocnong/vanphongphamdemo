@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Product, User, Offer, Order, Voucher, PRODUCTS, MOCK_USER, MOCK_ADMIN, VOUCHERS } from "./mockData";
+import { Product, User, Offer, Order, Voucher, Category, PRODUCTS, MOCK_USERS, VOUCHERS, CATEGORIES } from "./mockData";
 import { useToast } from "@/hooks/use-toast";
+import { addDays, isAfter, parseISO } from "date-fns";
 
 interface CartItem {
   productId: string;
@@ -12,39 +13,62 @@ interface CartItem {
 
 interface StoreContextType {
   user: User | null;
+  users: User[];
   products: Product[];
+  categories: Category[];
   cart: CartItem[];
   orders: Order[];
   offers: Offer[];
   vouchers: Voucher[];
-  login: (role: "user" | "admin") => void;
+  login: (email: string, role: "user" | "admin") => boolean;
   logout: () => void;
+  updateUser: (id: string, data: Partial<User>) => void;
   addToCart: (product: Product, quantity: number, priceOverride?: number) => void;
   removeFromCart: (productId: string) => void;
   updateCartQuantity: (productId: string, quantity: number) => void;
   checkout: (voucherId?: string) => void;
-  makeOffer: (productId: string, price: number) => void;
+  makeOffer: (productId: string, price: number, message?: string) => void;
   respondToOffer: (offerId: string, status: "accepted" | "rejected" | "countered", counterPrice?: number) => void;
   redeemVoucher: (voucherId: string) => void;
-  addProduct: (product: Omit<Product, "id" | "sold" | "feedbacks">) => void;
-  deleteProduct: (id: string) => void;
+  
+  // CRUD
+  addProduct: (product: Omit<Product, "id" | "sold" | "feedbacks" | "createdAt">) => void;
+  deleteProduct: (id: string) => void; // Soft delete
   updateProduct: (id: string, data: Partial<Product>) => void;
+  
+  addCategory: (category: Omit<Category, "id">) => void;
+  updateCategory: (id: string, data: Partial<Category>) => void;
+  deleteCategory: (id: string) => void;
+
+  addVoucher: (voucher: Omit<Voucher, "id">) => void;
+  updateVoucher: (id: string, data: Partial<Voucher>) => void;
+  deleteVoucher: (id: string) => void;
+
+  updateOrderStatus: (orderId: string, status: Order["status"]) => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(MOCK_USER);
+  const [user, setUser] = useState<User | null>(MOCK_USERS[0]); // Default logged in for easier dev, or null
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [categories, setCategories] = useState<Category[]>(CATEGORIES);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [vouchers, setVouchers] = useState<Voucher[]>(VOUCHERS);
   const { toast } = useToast();
 
-  const login = (role: "user" | "admin") => {
-    setUser(role === "admin" ? MOCK_ADMIN : MOCK_USER);
-    toast({ title: `Logged in as ${role}` });
+  const login = (email: string, role: "user" | "admin") => {
+    // Simple mock login
+    const foundUser = users.find(u => u.email === email && u.role === role);
+    if (foundUser) {
+      setUser(foundUser);
+      toast({ title: `Logged in as ${role}` });
+      return true;
+    }
+    return false;
   };
 
   const logout = () => {
@@ -53,7 +77,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toast({ title: "Logged out" });
   };
 
+  const updateUser = (id: string, data: Partial<User>) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
+    if (user && user.id === id) {
+      setUser(prev => prev ? { ...prev, ...data } : null);
+    }
+    toast({ title: "User updated" });
+  };
+
   const addToCart = (product: Product, quantity: number, priceOverride?: number) => {
+    if (product.stock < quantity) {
+      toast({ title: "Not enough stock", variant: "destructive" });
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
@@ -75,6 +112,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       removeFromCart(productId);
       return;
     }
+    const product = products.find(p => p.id === productId);
+    if (product && product.stock < quantity) {
+       toast({ title: `Only ${product.stock} available`, variant: "destructive" });
+       return;
+    }
+
     setCart((prev) =>
       prev.map((item) => (item.productId === productId ? { ...item, quantity } : item))
     );
@@ -102,27 +145,58 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         name: item.product.name
       })),
       total,
-      status: "processing",
+      status: "pending",
       date: new Date().toISOString(),
     };
+
+    // Update stock
+    setProducts(prev => prev.map(p => {
+      const cartItem = cart.find(c => c.productId === p.id);
+      if (cartItem) {
+        return { ...p, stock: p.stock - cartItem.quantity, sold: p.sold + cartItem.quantity };
+      }
+      return p;
+    }));
 
     setOrders((prev) => [newOrder, ...prev]);
     setCart([]);
     
     // Add points
     const pointsEarned = Math.floor(total / 10000);
-    setUser(prev => prev ? ({ ...prev, points: prev.points + pointsEarned }) : null);
+    updateUser(user.id, { points: user.points + pointsEarned });
     
     toast({ title: "Order placed successfully!", description: `You earned ${pointsEarned} points.` });
   };
 
-  const makeOffer = (productId: string, price: number) => {
+  const makeOffer = (productId: string, price: number, message?: string) => {
     if (!user) {
       toast({ title: "Please login first" });
       return;
     }
     const product = products.find(p => p.id === productId);
     if (!product) return;
+
+    if (!product.allowOffers) {
+      toast({ title: "Offers not allowed for this product", variant: "destructive" });
+      return;
+    }
+
+    let status: Offer["status"] = "pending";
+    let acceptedAt = undefined;
+
+    // Auto Accept Logic
+    if (product.autoAcceptPrice && price >= product.autoAcceptPrice) {
+      status = "accepted";
+      acceptedAt = new Date().toISOString();
+      toast({ title: "Offer instantly accepted!", description: "You can now buy at this price." });
+    }
+    // Auto Reject Logic
+    else if (product.autoRejectPrice && price < product.autoRejectPrice) {
+      status = "rejected";
+      toast({ title: "Offer rejected", description: "Price is too low." });
+    } else {
+      toast({ title: "Offer sent to seller" });
+    }
 
     const newOffer: Offer = {
       id: Math.random().toString(36).substr(2, 9),
@@ -132,17 +206,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       productImage: product.image,
       originalPrice: product.price,
       offerPrice: price,
-      status: "pending",
+      message,
+      status,
+      acceptedAt,
       date: new Date().toISOString(),
     };
     setOffers(prev => [newOffer, ...prev]);
-    toast({ title: "Offer sent to seller" });
   };
 
   const respondToOffer = (offerId: string, status: "accepted" | "rejected" | "countered", counterPrice?: number) => {
     setOffers(prev => prev.map(o => {
       if (o.id === offerId) {
-        return { ...o, status, counterPrice };
+        return { 
+          ...o, 
+          status, 
+          counterPrice, 
+          acceptedAt: status === "accepted" ? new Date().toISOString() : undefined 
+        };
       }
       return o;
     }));
@@ -155,27 +235,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!voucher) return;
 
     if (user.points >= voucher.pointCost) {
-      setUser({ ...user, points: user.points - voucher.pointCost, vouchers: [...user.vouchers, voucher.id] });
+      updateUser(user.id, { 
+        points: user.points - voucher.pointCost, 
+        vouchers: [...user.vouchers, voucher.id] 
+      });
       toast({ title: "Voucher redeemed!" });
     } else {
       toast({ title: "Not enough points", variant: "destructive" });
     }
   };
   
-  const addProduct = (productData: Omit<Product, "id" | "sold" | "feedbacks">) => {
+  // Products CRUD
+  const addProduct = (productData: Omit<Product, "id" | "sold" | "feedbacks" | "createdAt">) => {
       const newProduct: Product = {
           ...productData,
           id: Math.random().toString(36).substr(2, 9),
           sold: 0,
-          feedbacks: []
+          feedbacks: [],
+          createdAt: new Date().toISOString(),
       };
       setProducts(prev => [newProduct, ...prev]);
       toast({ title: "Product created" });
   };
 
   const deleteProduct = (id: string) => {
-      setProducts(prev => prev.filter(p => p.id !== id));
-      toast({ title: "Product deleted" });
+      // Soft delete
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, isDeleted: true } : p));
+      toast({ title: "Product removed from listing" });
   };
   
   const updateProduct = (id: string, data: Partial<Product>) => {
@@ -183,17 +269,55 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       toast({ title: "Product updated" });
   };
 
+  // Categories CRUD
+  const addCategory = (data: Omit<Category, "id">) => {
+    const newCat = { ...data, id: Math.random().toString(36).substr(2, 9) };
+    setCategories(prev => [...prev, newCat]);
+    toast({ title: "Category added" });
+  };
+  const updateCategory = (id: string, data: Partial<Category>) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+    toast({ title: "Category updated" });
+  };
+  const deleteCategory = (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+    toast({ title: "Category deleted" });
+  };
+
+  // Vouchers CRUD
+  const addVoucher = (data: Omit<Voucher, "id">) => {
+    const newVoucher = { ...data, id: Math.random().toString(36).substr(2, 9) };
+    setVouchers(prev => [...prev, newVoucher]);
+    toast({ title: "Voucher added" });
+  };
+  const updateVoucher = (id: string, data: Partial<Voucher>) => {
+    setVouchers(prev => prev.map(v => v.id === id ? { ...v, ...data } : v));
+    toast({ title: "Voucher updated" });
+  };
+  const deleteVoucher = (id: string) => {
+    setVouchers(prev => prev.filter(v => v.id !== id));
+    toast({ title: "Voucher deleted" });
+  };
+
+  const updateOrderStatus = (orderId: string, status: Order["status"]) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+    toast({ title: `Order marked as ${status}` });
+  };
+
   return (
     <StoreContext.Provider
       value={{
         user,
+        users,
         products,
+        categories,
         cart,
         orders,
         offers,
         vouchers,
         login,
         logout,
+        updateUser,
         addToCart,
         removeFromCart,
         updateCartQuantity,
@@ -203,7 +327,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         redeemVoucher,
         addProduct,
         deleteProduct,
-        updateProduct
+        updateProduct,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        addVoucher,
+        updateVoucher,
+        deleteVoucher,
+        updateOrderStatus
       }}
     >
       {children}
