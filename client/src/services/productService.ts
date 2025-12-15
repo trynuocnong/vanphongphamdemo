@@ -1,5 +1,21 @@
 const API_URL = "http://localhost:3001";
 
+export const getProductById = async (id: string) => {
+  const res = await fetch(`${API_URL}/products/${id}`);
+  return res.json();
+};
+
+export const getRelatedProducts = async (
+  categoryId: string,
+  excludeId: string
+) => {
+  const res = await fetch(
+    `${API_URL}/products?categoryId=${categoryId}`
+  );
+  const data = await res.json();
+  return data.filter((p: any) => p.id !== excludeId).slice(0, 4);
+};
+
 export async function getProducts() {
   const res = await fetch(`${API_URL}/products`);
   return res.json();

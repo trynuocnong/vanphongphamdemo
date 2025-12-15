@@ -1,30 +1,302 @@
 {
   "users": [
     {
-      "id": 1,
+      "id": "a1",
       "name": "Tu",
       "email": "admin@example.com",
       "password": "123",
-      "role": "admin"
+      "role": "admin",
+      "points": 0,
+      "vouchers": []
     },
     {
-      "id": "de42",
+      "id": "u2",
       "name": "Tu",
       "email": "user@example.com",
       "password": "123",
-      "role": "user"
+      "role": "user",
+      "points": 1500,
+      "vouchers": [
+        "v1"
+      ],
+      "phone": "0901234567",
+      "address": "123 Le Loi, District 1, HCMC"
+    }
+  ],
+  "categories": [
+    {
+      "id": "c1",
+      "name": "Notebooks",
+      "description": "Premium paper goods"
+    },
+    {
+      "id": "c2",
+      "name": "Writing",
+      "description": "Pens, pencils, and inks"
+    },
+    {
+      "id": "c3",
+      "name": "Desk",
+      "description": "Organizers and accessories"
+    },
+    {
+      "id": "c4",
+      "name": "Paper",
+      "description": "Specialty paper and tapes"
     }
   ],
   "products": [
     {
-      "name": "Bút bi Thiên Long",
-      "price": 5000,
-      "offerPrice": 4000,
-      "category": "Bút",
+      "id": "1",
+      "name": "Premium Linen Notebook",
+      "price": 150000,
+      "description": "A high-quality linen cover notebook with 100gsm cream paper. Perfect for bullet journaling or sketching.",
+      "stock": 45,
+      "sold": 120,
+      "categoryId": "c1",
+      "categoryName": "Notebooks",
+      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
+      "images": [
+        "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800"
+      ],
+      "isNew": true,
+      "allowOffers": true,
+      "autoAcceptPrice": 140000,
+      "autoRejectPrice": 100000,
+      "feedbacks": [
+        {
+          "id": "f1",
+          "user": "Alice",
+          "rating": 5,
+          "comment": "Amazing paper quality!",
+          "date": "2023-10-15"
+        },
+        {
+          "id": "f2",
+          "user": "Bob",
+          "rating": 4,
+          "comment": "Cover feels great.",
+          "date": "2023-10-10"
+        }
+      ],
+      "createdAt": "2023-10-01T10:00:00Z"
+    },
+    {
+      "id": "2",
+      "name": "Solid Brass Fountain Pen",
+      "price": 450000,
+      "originalPrice": 550000,
+      "description": "Weighted brass pen that ages beautifully over time. Fine nib included.",
+      "stock": 12,
+      "sold": 34,
+      "categoryId": "c2",
+      "categoryName": "Writing",
+      "image": "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=800",
+      "images": [
+        "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=800"
+      ],
+      "isSale": true,
+      "allowOffers": true,
+      "autoAcceptPrice": 420000,
+      "feedbacks": [
+        {
+          "id": "f3",
+          "user": "Charlie",
+          "rating": 5,
+          "comment": "Heavy and smooth.",
+          "date": "2023-09-28"
+        }
+      ],
+      "createdAt": "2023-09-15T10:00:00Z"
+    },
+    {
+      "id": "3",
+      "name": "Ceramic Desk Organizer",
+      "price": 280000,
+      "description": "Minimalist ceramic holder for all your stationery essentials.",
+      "stock": 8,
+      "sold": 56,
+      "categoryId": "c3",
+      "categoryName": "Desk",
+      "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
+      "images": [
+        "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800"
+      ],
+      "allowOffers": false,
+      "feedbacks": [],
+      "createdAt": "2023-08-20T10:00:00Z"
+    },
+    {
+      "id": "4",
+      "name": "Washi Tape Set - Earth Tones",
+      "price": 85000,
+      "description": "Set of 5 washi tapes in muted earth tones.",
       "stock": 100,
-      "image": "/images/pen.jpg"
+      "sold": 450,
+      "categoryId": "c4",
+      "categoryName": "Paper",
+      "image": "https://images.unsplash.com/photo-1595248883856-745a34db248a?auto=format&fit=crop&q=80&w=800",
+      "images": [
+        "https://images.unsplash.com/photo-1595248883856-745a34db248a?auto=format&fit=crop&q=80&w=800"
+      ],
+      "allowOffers": true,
+      "feedbacks": [],
+      "createdAt": "2023-11-01T10:00:00Z"
+    },
+    {
+      "id": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 120000,
+      "description": "Undated weekly planner pad. Tear-off sheets.",
+      "stock": 30,
+      "sold": 89,
+      "categoryId": "c1",
+      "categoryName": "Notebooks",
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "images": [
+        "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800"
+      ],
+      "isNew": true,
+      "allowOffers": true,
+      "feedbacks": [],
+      "createdAt": "2025-01-05T10:00:00Z"
     }
   ],
-  "carts": [],
-  "orders": []
+  "vouchers": [
+    {
+      "id": "v1",
+      "code": "WELCOME10",
+      "discount": 10000,
+      "minSpend": 100000,
+      "pointCost": 0,
+      "description": "10k off orders over 100k",
+      "detailedConditions": "Valid for new users. Minimum order value 100,000 VND. Applies to all categories."
+    },
+    {
+      "id": "v2",
+      "code": "SAVE50",
+      "discount": 50000,
+      "minSpend": 500000,
+      "pointCost": 500,
+      "description": "50k off orders over 500k",
+      "detailedConditions": "Redeemable with 500 points. Minimum order value 500,000 VND."
+    },
+    {
+      "id": "v3",
+      "code": "FREESHIP",
+      "discount": 30000,
+      "minSpend": 300000,
+      "pointCost": 300,
+      "description": "Free shipping (max 30k)",
+      "detailedConditions": "Max discount 30,000 VND. Minimum order value 300,000 VND. Cannot be combined with other offers."
+    }
+  ],
+  "offers": [
+    {
+      "id": "69886016-424f-4eb4-90a1-880dc3ec8bb9",
+      "productId": "1",
+      "productName": "Premium Linen Notebook",
+      "productImage": "https://images.unsplash.com/photo-1544816155-12df9643f363",
+      "originalPrice": 150000,
+      "userId": "u2",
+      "userName": "Tu",
+      "offerPrice": 100000,
+      "message": "hehe",
+      "status": "rejected",
+      "createdAt": "2025-12-15T06:01:25.994Z",
+      "acceptedAt": null
+    },
+    {
+      "id": "6f47d6f1-a2bb-43c5-86fd-d16b64081e36",
+      "productId": "1",
+      "userId": "u2",
+      "offerPrice": 100000,
+      "message": "heheboi",
+      "status": "rejected",
+      "createdAt": "2025-12-15T06:18:08.585Z"
+    }
+  ],
+  "carts": [
+    {
+      "id": "42c4",
+      "userId": "u2",
+      "productId": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 120000,
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 23
+    },
+    {
+      "id": "7fbc",
+      "userId": "u2",
+      "productId": "4",
+      "name": "Washi Tape Set - Earth Tones",
+      "price": 85000,
+      "image": "https://images.unsplash.com/photo-1595248883856-745a34db248a?auto=format&fit=crop&q=80&w=800",
+      "quantity": 10
+    },
+    {
+      "id": "bd84",
+      "userId": "u2",
+      "productId": null,
+      "name": "Black Gel Pen 0.5mm",
+      "price": 25000,
+      "image": "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 7
+    },
+    {
+      "id": "798b",
+      "userId": "u2",
+      "productId": "3",
+      "name": "Ceramic Desk Organizer",
+      "price": 280000,
+      "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
+      "quantity": 1
+    },
+    {
+      "id": "1f6a",
+      "userId": "u2",
+      "productId": "2",
+      "name": "Solid Brass Fountain Pen",
+      "price": 450000,
+      "image": "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 1
+    },
+    {
+      "id": "b7QmQf",
+      "userId": "u2",
+      "productId": "1",
+      "name": "Premium Linen Notebook",
+      "price": 150000,
+      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
+      "quantity": 3
+    },
+    {
+      "id": "WcBNBj",
+      "userId": "a1",
+      "productId": "1",
+      "name": "Premium Linen Notebook",
+      "price": 150000,
+      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
+      "quantity": 1
+    },
+    {
+      "id": "aoBZcS",
+      "userId": "a1",
+      "productId": "3",
+      "name": "Ceramic Desk Organizer",
+      "price": 280000,
+      "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
+      "quantity": 1
+    },
+    {
+      "id": "fccVBQ",
+      "userId": "a1",
+      "productId": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 120000,
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 1
+    }
+  ]
 }

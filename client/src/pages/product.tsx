@@ -1,119 +1,212 @@
-
 import { useParams, Link } from "wouter";
-import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Star, Truck, ShieldCheck, RefreshCcw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { isAfter, parseISO, addHours } from "date-fns";
 
+// Import services theo logic File 1
+import { getProducts } from "@/services/productService";
+import { addToCart } from "@/services/cartService";
+import { getOffers, createOffer } from "@/services/offerService";
+
 export default function ProductDetail() {
   const { id } = useParams();
-  const { products, addToCart, makeOffer, user, offers, checkOfferBlock } = useStore();
   const { toast } = useToast();
+
+  // --- STATE MANAGEMENT (Theo File 1) ---
+  const [products, setProducts] = useState<any[]>([]);
+  const [offers, setOffers] = useState<any[]>([]);
   const [offerAmount, setOfferAmount] = useState("");
   const [offerMessage, setOfferMessage] = useState("");
   const [isOfferOpen, setIsOfferOpen] = useState(false);
 
+  const userId = localStorage.getItem("userId");
+
+  // Fetch data khi component mount
+  useEffect(() => {
+    getProducts().then(setProducts);
+    getOffers().then(setOffers);
+  }, []);
+
   const product = products.find((p) => p.id === id);
 
-  if (!product || product.isDeleted) return <div className="p-10 text-center">Product not found</div>;
+  if (!product || product.isDeleted) {
+    return <div className="p-10 text-center">Product not found</div>;
+  }
 
-  // Check if user has an accepted offer for this product that is still valid (within 24h)
-  const acceptedOffer = user ? offers.find(o => {
-    if (o.productId === product.id && o.userId === user.id && o.status === "accepted" && o.acceptedAt) {
-      const expiryTime = addHours(parseISO(o.acceptedAt), 24);
-      return isAfter(expiryTime, new Date());
-    }
-    return false;
-  }) : null;
+  // --- LOGIC TÍNH TOÁN GIÁ & OFFER (Theo File 1) ---
+  const acceptedOffer = userId
+    ? offers.find((o) => {
+        if (
+          o.productId === product.id &&
+          o.userId === userId &&
+          o.status === "accepted" &&
+          o.acceptedAt
+        ) {
+          const expiry = addHours(parseISO(o.acceptedAt), 24);
+          return isAfter(expiry, new Date());
+        }
+        return false;
+      })
+    : null;
 
   const activePrice = acceptedOffer ? acceptedOffer.offerPrice : product.price;
 
-  // Check offer block status
-  const isBlocked = user ? checkOfferBlock(user.id, product.id) : false;
+  // Logic sản phẩm liên quan
+  const relatedProducts = products
+    .filter(
+      (p) =>
+        p.categoryId === product.categoryId &&
+        p.id !== product.id &&
+        !p.isDeleted
+    )
+    .slice(0, 4);
 
-  // Related products (same category, excluding current, not deleted)
-  const relatedProducts = products.filter(p => p.categoryId === product.categoryId && p.id !== product.id && !p.isDeleted).slice(0, 4);
+  // --- HANDLERS (Async Service Calls) ---
 
-  const handleOfferSubmit = () => {
-    const price = parseInt(offerAmount);
-    if (isNaN(price) || price <= 0) {
+  const handleAddToCart = async () => {
+    if (!userId) {
+      toast({
+        title: "Please login",
+        description: "Login to add product to cart",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Gọi service addToCart
+    await addToCart(userId, product, 1);
+
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
+
+  const handleOfferSubmit = async () => {
+    if (!userId) {
+        toast({ title: "Please login to make an offer", variant: "destructive" });
+        return;
+    }
+
+    const price = Number(offerAmount);
+    if (!price || price <= 0) {
       toast({ title: "Invalid price", variant: "destructive" });
       return;
     }
-    makeOffer(product.id, price, offerMessage);
+
+    // Gọi service createOffer
+    await createOffer({
+      id: crypto.randomUUID(),
+      productId: product.id,
+      userId,
+      offerPrice: price,
+      message: offerMessage,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    });
+
+    toast({ title: "Offer sent", description: "Seller will review your offer soon." });
     setIsOfferOpen(false);
     setOfferAmount("");
     setOfferMessage("");
   };
 
+  // Safe images array (fallback nếu API chỉ trả về 1 string 'image')
+  const displayImages = product.images && product.images.length > 0 
+    ? product.images 
+    : [product.image];
+
   return (
     <div className="container px-4 py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        {/* Images */}
+        {/* === SECTION 1: IMAGES === */}
         <div className="space-y-4">
           <div className="aspect-square bg-muted rounded-lg overflow-hidden border relative">
-            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
             {product.stock <= 0 && (
-               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                 <span className="text-white text-2xl font-bold border-2 border-white px-4 py-2">OUT OF STOCK</span>
-               </div>
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="text-white text-2xl font-bold border-2 border-white px-4 py-2">
+                  OUT OF STOCK
+                </span>
+              </div>
             )}
           </div>
+          {/* Thumbnail list */}
           <div className="grid grid-cols-4 gap-4">
-            {product.images.map((img, i) => (
-              <div key={i} className="aspect-square bg-muted rounded-md overflow-hidden border cursor-pointer hover:border-primary">
+            {displayImages.map((img: string, i: number) => (
+              <div
+                key={i}
+                className="aspect-square bg-muted rounded-md overflow-hidden border cursor-pointer hover:border-primary"
+              >
                 <img src={img} alt="" className="w-full h-full object-cover" />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Info */}
+        {/* === SECTION 2: PRODUCT INFO === */}
         <div className="space-y-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-               <Badge variant="secondary" className="capitalize">{product.categoryName}</Badge>
-               {product.stock > 0 && product.stock < 10 && <Badge variant="destructive">Low Stock: {product.stock}</Badge>}
-               {product.stock > 10 && <Badge variant="outline" className="text-green-600 border-green-600">In Stock: {product.stock}</Badge>}
+              <Badge variant="secondary" className="capitalize">
+                {product.categoryName || "Category"}
+              </Badge>
+              {product.stock > 0 && product.stock < 10 && (
+                <Badge variant="destructive">Low Stock: {product.stock}</Badge>
+              )}
+              {product.stock >= 10 && (
+                <Badge variant="outline" className="text-green-600 border-green-600">
+                  In Stock: {product.stock}
+                </Badge>
+              )}
             </div>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">{product.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">
+              {product.name}
+            </h1>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center text-yellow-500">
                 <Star className="fill-current w-4 h-4" />
                 <span className="ml-1 text-foreground font-medium">4.8</span>
               </div>
-              <span>{product.sold} Sold</span>
-              <span>{product.feedbacks.length} Reviews</span>
+              <span>{product.sold || 0} Sold</span>
+              <span>{product.feedbacks?.length || 0} Reviews</span>
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-baseline gap-4">
-               <span className="text-3xl font-bold text-primary">
-                 {activePrice.toLocaleString()}đ
-               </span>
-               {acceptedOffer && (
-                 <Badge className="bg-green-600">Offer Accepted!</Badge>
-               )}
-               {!acceptedOffer && product.originalPrice && (
-                 <span className="text-lg text-muted-foreground line-through">
-                   {product.originalPrice.toLocaleString()}đ
-                 </span>
-               )}
+              <span className="text-3xl font-bold text-primary">
+                {activePrice.toLocaleString()}đ
+              </span>
+              {acceptedOffer && (
+                <Badge className="bg-green-600">Offer Accepted!</Badge>
+              )}
+              {/* Nếu đang hiển thị giá gốc (không có offer) thì không cần gạch ngang giá cũ trừ khi bạn có field originalPrice */}
             </div>
+            
             {acceptedOffer && (
-               <p className="text-sm text-green-600">Offer price valid for 24 hours from acceptance.</p>
-            )}
-            {isBlocked && (
-              <p className="text-sm text-red-600 font-bold">You are blocked from making offers on this product (Too many rejections).</p>
+              <p className="text-sm text-green-600">
+                Offer price valid for 24 hours from acceptance.
+              </p>
             )}
           </div>
 
@@ -123,25 +216,29 @@ export default function ProductDetail() {
 
           <div className="flex flex-col gap-4">
             <div className="flex gap-4">
-              <Button 
-                size="lg" 
-                className="flex-1 h-12 text-lg" 
-                onClick={() => addToCart(product, 1, activePrice)}
+              <Button
+                size="lg"
+                className="flex-1 h-12 text-lg"
+                onClick={handleAddToCart}
                 disabled={product.stock <= 0}
               >
-                {product.stock <= 0 ? "Out of Stock" : (acceptedOffer ? "Buy Now at Offer Price" : "Add to Cart")}
+                {product.stock <= 0
+                  ? "Out of Stock"
+                  : acceptedOffer
+                  ? "Buy Now at Offer Price"
+                  : "Add to Cart"}
               </Button>
-              
+
+              {/* Logic ẩn hiện nút Make Offer giống File 1 */}
               {!acceptedOffer && product.allowOffers && product.stock > 0 && (
                 <Dialog open={isOfferOpen} onOpenChange={setIsOfferOpen}>
                   <DialogTrigger asChild>
-                    <Button 
-                      size="lg" 
-                      variant="outline" 
+                    <Button
+                      size="lg"
+                      variant="outline"
                       className="flex-1 h-12 text-lg border-primary text-primary hover:bg-primary/5"
-                      disabled={isBlocked}
                     >
-                      {isBlocked ? "Offer Blocked" : "Make an Offer"}
+                      Make an Offer
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -150,22 +247,27 @@ export default function ProductDetail() {
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                       <p className="text-sm text-muted-foreground">
-                        Enter the price you are willing to pay for <strong>{product.name}</strong>. 
-                        The seller will review your offer.
+                        Enter the price you are willing to pay for{" "}
+                        <strong>{product.name}</strong>. The seller will review
+                        your offer.
                       </p>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Your Offer (VND)</label>
-                        <Input 
-                          type="number" 
-                          placeholder="e.g. 120000" 
+                        <label className="text-sm font-medium">
+                          Your Offer (VND)
+                        </label>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 120000"
                           value={offerAmount}
                           onChange={(e) => setOfferAmount(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Message (Optional)</label>
-                        <Textarea 
-                          placeholder="I really like this item..." 
+                        <label className="text-sm font-medium">
+                          Message (Optional)
+                        </label>
+                        <Textarea
+                          placeholder="I really like this item..."
                           value={offerMessage}
                           onChange={(e) => setOfferMessage(e.target.value)}
                         />
@@ -199,20 +301,28 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Reviews Section */}
+      {/* === SECTION 3: REVIEWS === */}
       <div className="mt-20 max-w-3xl">
         <h2 className="text-2xl font-serif font-bold mb-6">Customer Reviews</h2>
         <div className="space-y-6">
-          {product.feedbacks.length > 0 ? (
-            product.feedbacks.map((fb) => (
-              <div key={fb.id} className="border-b pb-6">
+          {product.feedbacks && product.feedbacks.length > 0 ? (
+            product.feedbacks.map((fb: any) => (
+              <div key={fb.id || Math.random()} className="border-b pb-6">
+                {/* Fallback data nếu API không trả về user/date */}
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold">{fb.user}</span>
-                  <span className="text-xs text-muted-foreground">{fb.date}</span>
+                  <span className="font-semibold">{fb.user || "Anonymous"}</span> 
+                  <span className="text-xs text-muted-foreground">
+                     {fb.date || "Recent"}
+                  </span>
                 </div>
                 <div className="flex text-yellow-500 mb-2">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`w-4 h-4 ${i < fb.rating ? "fill-current" : "text-muted"}`} />
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${
+                        i < fb.rating ? "fill-current" : "text-muted"
+                      }`}
+                    />
                   ))}
                 </div>
                 <p className="text-muted-foreground">{fb.comment}</p>
@@ -224,27 +334,36 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Related Products */}
+      {/* === SECTION 4: RELATED PRODUCTS === */}
       {relatedProducts.length > 0 && (
         <div className="mt-20">
-          <h2 className="text-2xl font-serif font-bold mb-6">You Might Also Like</h2>
+          <h2 className="text-2xl font-serif font-bold mb-6">
+            You Might Also Like
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {relatedProducts.map((p) => (
-              <Card key={p.id} className="group border-none shadow-none bg-transparent">
+              <Card
+                key={p.id}
+                className="group border-none shadow-none bg-transparent"
+              >
                 <CardContent className="p-0 relative aspect-square bg-muted mb-4 overflow-hidden rounded-md">
                   <Link href={`/product/${p.id}`}>
-                    <img 
-                      src={p.image} 
+                    <img
+                      src={p.image}
                       alt={p.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </Link>
                 </CardContent>
                 <CardFooter className="p-0 block">
-                   <Link href={`/product/${p.id}`}>
-                    <h3 className="font-medium text-lg leading-none mb-1 group-hover:text-primary transition-colors">{p.name}</h3>
-                   </Link>
-                   <p className="font-semibold">{p.price.toLocaleString()}đ</p>
+                  <Link href={`/product/${p.id}`}>
+                    <h3 className="font-medium text-lg leading-none mb-1 group-hover:text-primary transition-colors">
+                      {p.name}
+                    </h3>
+                  </Link>
+                  <p className="font-semibold">
+                    {p.price.toLocaleString()}đ
+                  </p>
                 </CardFooter>
               </Card>
             ))}

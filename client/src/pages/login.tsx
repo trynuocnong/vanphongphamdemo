@@ -21,34 +21,37 @@ export default function Login() {
   const [regPass, setRegPass] = useState("");
 
   // --- LOGIN ---
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const user = await loginUser(email, password, role);
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const user = await loginUser(email, password, role);
 
-      if (!user) {
-        toast({
-          title: "Login failed",
-          description: "Invalid email or password",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Lưu vào localStorage để Admin page kiểm tra
-      localStorage.setItem("userRole", user.role);
-      localStorage.setItem("userEmail", user.email);
-
-      toast({ title: "Login success" });
-      setLocation(user.role === "admin" ? "/admin" : "/");
-    } catch {
+    if (!user) {
       toast({
-        title: "Error",
-        description: "Server error",
+        title: "Login failed",
+        description: "Invalid email or password",
         variant: "destructive",
       });
+      return;
     }
-  };
+
+    // ✅ BẮT BUỘC PHẢI CÓ
+    localStorage.setItem("userId", user.id);
+
+    // Đã có
+    localStorage.setItem("userRole", user.role);
+    localStorage.setItem("userEmail", user.email);
+
+    toast({ title: "Login success" });
+    setLocation(user.role === "admin" ? "/admin" : "/");
+  } catch {
+    toast({
+      title: "Error",
+      description: "Server error",
+      variant: "destructive",
+    });
+  }
+};
 
   // --- REGISTER ---
   const handleRegister = async (e: React.FormEvent) => {

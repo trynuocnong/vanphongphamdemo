@@ -1,24 +1,22 @@
 const API_URL = "http://localhost:3001";
 
-export async function getOrders() {
-  const res = await fetch(`${API_URL}/orders`);
+export async function getOffers() {
+  const res = await fetch(`${API_URL}/offers`);
   return res.json();
 }
 
-export async function addOrder(order: any) {
-  const res = await fetch(`${API_URL}/orders`, {
+export async function createOffer(data: any) {
+  return fetch(`${API_URL}/offers`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(order)
+    body: JSON.stringify(data),
   });
-  return res.json();
 }
 
-export async function updateOrderStatus(id: string, status: string) {
-  const res = await fetch(`${API_URL}/orders/${id}`, {
+export async function updateOffer(id: string, data: any) {
+  return fetch(`${API_URL}/offers/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status })
+    body: JSON.stringify(data),
   });
-  return res.json();
 }

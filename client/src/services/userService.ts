@@ -1,5 +1,11 @@
 const API_URL = "http://localhost:3001";
 
+export const getUserByEmail = async (email: string) => {
+  const res = await fetch(`${API_URL}/users?email=${email}`);
+  const data = await res.json();
+  return data[0];
+};
+
 export async function registerUser(user: {
   name: string;
   email: string;

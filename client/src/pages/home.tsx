@@ -1,30 +1,52 @@
 
-import { useStore } from "@/lib/store";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import heroImg from "@assets/generated_images/minimalist_stationery_workspace_hero.png";
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
+import { useEffect, useState } from "react";
+import { getProducts } from "@/services/productService";
+import { addToCart } from "@/services/cartService";
+
 export default function Home() {
-  const { products } = useStore();
+  const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter out soft-deleted products
+  useEffect(() => {
+    getProducts().then(setProducts);
+  }, []);
+
+  // ✅ Không hiển thị sản phẩm bị xóa
   const activeProducts = products.filter(p => !p.isDeleted);
-  
-  // Filter by search
-  const filteredProducts = activeProducts.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+
+  // 🔍 Search
+  const filteredProducts = activeProducts.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const bestsellers = filteredProducts.sort((a, b) => b.sold - a.sold).slice(0, 4);
-  const newArrivals = filteredProducts.filter(p => p.isNew).slice(0, 4);
-  const onSale = filteredProducts.filter(p => p.isSale).slice(0, 4);
+  // 🔥 Bán chạy
+  const bestsellers = [...filteredProducts]
+    .sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0))
+    .slice(0, 4);
+
+  // 🆕 Sản phẩm mới
+  const newArrivals = [...filteredProducts]
+    .filter(p => p.isNew)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() -
+        new Date(a.createdAt).getTime()
+    )
+    .slice(0, 4);
+
+  // 💸 Sale
+  const onSale = filteredProducts
+    .filter(p => p.isSale || p.originalPrice)
+    .slice(0, 4);
 
   return (
     <div className="space-y-16 pb-16">
@@ -90,7 +112,6 @@ export default function Home() {
 }
 
 function ProductSection({ title, products, id }: { title: string, products: any[], id: string }) {
-  const { addToCart } = useStore();
 
   if (products.length === 0) return null;
 
@@ -130,14 +151,30 @@ function ProductSection({ title, products, id }: { title: string, products: any[
                   <span className="font-semibold">{product.price.toLocaleString()}đ</span>
                 </div>
               </div>
-              <Button 
-                className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity" 
-                variant="outline"
-                disabled={product.stock <= 0}
-                onClick={() => addToCart(product, 1)}
-              >
-                {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
-              </Button>
+<Button
+  className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+  variant="outline"
+  disabled={product.stock <= 0}
+  onClick={async () => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      alert("Please login to add products to cart");
+      return;
+    }
+
+    try {
+      await addToCart(userId, product, 1);
+      alert("Added to cart!");
+    } catch {
+      alert("Failed to add to cart");
+    }
+  }}
+>
+  {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
+</Button>
+
+
             </CardFooter>
           </Card>
         ))}

@@ -17,7 +17,29 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useEffect } from "react";
 import { getProducts, addProduct, updateProduct, deleteProduct } from "../services/productService";
+import {
+  getOffers,
+  respondToOffer,
+  createOffer,
+  deleteOffer,
+} from "@/services/offerService";
 
+import {
+  getVouchers,
+  addVoucher,
+  updateVoucher,
+  deleteVoucher,
+} from "@/services/voucherService";
+
+type Voucher = {
+  id: string;
+  code: string;
+  discount: number;
+  minSpend: number;
+  pointCost: number;
+  description?: string;
+  detailedConditions?: string;
+};
 
 
 export default function Admin() {
@@ -66,6 +88,9 @@ export default function Admin() {
     await updateUser(id,data);
     setUsers(users.map(u=>u.id===id?{...u,...data}:u));
   };
+
+
+  
   return (
     <div className="container px-4 py-10">
       <div className="flex justify-between items-center mb-8">
@@ -112,10 +137,9 @@ export default function Admin() {
         <TabsContent value="users">
            <UsersTab users={users} updateUser={updateUser} deleteUser={deleteUser} />
         </TabsContent>
-
-        <TabsContent value="vouchers">
-           <VouchersTab vouchers={vouchers} addVoucher={addVoucher} deleteVoucher={deleteVoucher} updateVoucher={updateVoucher} />
-        </TabsContent>
+<TabsContent value="vouchers">
+   <VouchersTab />
+</TabsContent>
 
         <TabsContent value="feedbacks">
            <FeedbacksTab products={products} deleteFeedback={deleteFeedback} />
@@ -206,6 +230,7 @@ function OverviewTab({ orders, products }: { orders: any[], products: any[] }) {
 function OrdersTab({ orders, updateStatus }: { orders: any[], updateStatus: any }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  
 
   const filteredOrders = orders.filter(o => {
     const matchesStatus = filterStatus === "all" || o.status === filterStatus;
@@ -462,10 +487,30 @@ function ProductsTab({ categories }: any) {
   );
 }
 
-function OffersTab({ offers, respondToOffer }: any) {
+function OffersTab() {
+  const [offers, setOffers] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState("all");
-  
-  const filteredOffers = offers.filter((o: any) => filterStatus === "all" || o.status === filterStatus);
+  const { toast } = useToast();
+
+const loadOffers = async () => {
+  const data = await getOffers();
+  setOffers(data);
+};
+
+
+  useEffect(() => {
+    loadOffers();
+  }, []);
+
+  const handleRespond = async (id: string, status: "accepted" | "rejected") => {
+    await respondToOffer(id, status);
+    toast({ title: `Offer ${status}` });
+    loadOffers();
+  };
+
+  const filteredOffers = offers.filter(
+    (o) => filterStatus === "all" || o.status === filterStatus
+  );
 
   return (
     <Card>
@@ -473,17 +518,19 @@ function OffersTab({ offers, respondToOffer }: any) {
         <div className="flex justify-between items-center">
           <CardTitle>Offer Management</CardTitle>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
-             <SelectContent>
-               <SelectItem value="all">All Status</SelectItem>
-               <SelectItem value="pending">Pending</SelectItem>
-               <SelectItem value="accepted">Accepted</SelectItem>
-               <SelectItem value="rejected">Rejected</SelectItem>
-               <SelectItem value="countered">Countered</SelectItem>
-             </SelectContent>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
           </Select>
         </div>
       </CardHeader>
+
       <CardContent>
         <Table>
           <TableHeader>
@@ -496,35 +543,61 @@ function OffersTab({ offers, respondToOffer }: any) {
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
-            {filteredOffers.map((offer: any) => (
+            {filteredOffers.map((offer) => (
               <TableRow key={offer.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <img src={offer.productImage} className="w-8 h-8 rounded object-cover" />
+                    <img
+                      src={offer.productImage}
+                      className="w-8 h-8 rounded object-cover"
+                    />
                     <div className="text-sm">
                       <p className="font-medium">{offer.productName}</p>
-                      <p className="text-xs text-muted-foreground line-through">{offer.originalPrice.toLocaleString()}đ</p>
+                      <p className="text-xs text-muted-foreground line-through">
+                        {offer.originalPrice.toLocaleString()}đ
+                      </p>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{offer.userId}</TableCell>
-                <TableCell className="font-bold text-primary">{offer.offerPrice.toLocaleString()}đ</TableCell>
+
+                <TableCell>{offer.userName || offer.userId}</TableCell>
+
+                <TableCell className="font-bold text-primary">
+                  {offer.offerPrice.toLocaleString()}đ
+                </TableCell>
+
                 <TableCell className="max-w-[150px] truncate text-xs text-muted-foreground">
                   {offer.message || "-"}
                 </TableCell>
+
                 <TableCell>
-                  <Badge variant={offer.status === "pending" ? "outline" : "secondary"}>
+                  <Badge
+                    variant={
+                      offer.status === "pending" ? "outline" : "secondary"
+                    }
+                  >
                     {offer.status}
                   </Badge>
                 </TableCell>
+
                 <TableCell>
                   {offer.status === "pending" && (
                     <div className="flex gap-2">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8 w-8 p-0" onClick={() => respondToOffer(offer.id, "accepted")}>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 h-8 w-8 p-0"
+                        onClick={() => handleRespond(offer.id, "accepted")}
+                      >
                         <Check className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" variant="destructive" className="h-8 w-8 p-0" onClick={() => respondToOffer(offer.id, "rejected")}>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleRespond(offer.id, "rejected")}
+                      >
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -538,6 +611,7 @@ function OffersTab({ offers, respondToOffer }: any) {
     </Card>
   );
 }
+
 
 function UsersTab({ users, updateUser, deleteUser }: any) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -650,112 +724,224 @@ function UsersTab({ users, updateUser, deleteUser }: any) {
   )
 }
 
-function VouchersTab({ vouchers, addVoucher, deleteVoucher, updateVoucher }: any) {
+function VouchersTab() { // Không cần nhận props nữa
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editVoucher, setEditVoucher] = useState<any>(null);
+  const [editVoucher, setEditVoucher] = useState<Voucher | null>(null);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // 1. READ: Tải dữ liệu khi vào tab
+  useEffect(() => {
+    fetchVouchers();
+  }, []);
+
+  const fetchVouchers = async () => {
+    try {
+      const data = await getVouchers();
+      setVouchers(data);
+    } catch (error) {
+      console.error("Failed to fetch vouchers", error);
+    }
+  };
+
+  // 2. CREATE & UPDATE
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-       code: formData.get("code"),
-       discount: parseInt(formData.get("discount") as string),
-       minSpend: parseInt(formData.get("minSpend") as string),
-       pointCost: parseInt(formData.get("pointCost") as string),
-       description: formData.get("description"),
-       detailedConditions: formData.get("detailedConditions")
+
+    const data: any = {
+      code: formData.get("code") as string,
+      discount: Number(formData.get("discount")),
+      minSpend: Number(formData.get("minSpend")),
+      pointCost: Number(formData.get("pointCost")),
+      description: formData.get("description") as string,
+      detailedConditions: formData.get("detailedConditions") as string,
     };
 
-    if (editVoucher) {
-       updateVoucher(editVoucher.id, data);
-    } else {
-       addVoucher(data);
+    try {
+      if (editVoucher) {
+        // Update logic
+        await updateVoucher(editVoucher.id, data);
+        toast({ title: "Voucher updated successfully" });
+      } else {
+        // Create logic: Cần thêm ID mới
+        await addVoucher({ ...data, id: crypto.randomUUID() });
+        toast({ title: "Voucher created successfully" });
+      }
+      
+      // Refresh dữ liệu và đóng dialog
+      await fetchVouchers();
+      setIsDialogOpen(false);
+      setEditVoucher(null);
+    } catch (error) {
+      toast({ title: "Error saving voucher", variant: "destructive" });
     }
-    setIsDialogOpen(false);
-    setEditVoucher(null);
+  };
+
+  // 3. DELETE
+  const handleDelete = async (id: string) => {
+    if(!confirm("Are you sure you want to delete this voucher?")) return;
+    
+    try {
+      await deleteVoucher(id);
+      toast({ title: "Voucher deleted" });
+      fetchVouchers(); // Refresh dữ liệu ngay lập tức
+    } catch (error) {
+      toast({ title: "Error deleting voucher", variant: "destructive" });
+    }
   };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row justify-between items-center">
-         <CardTitle>Vouchers</CardTitle>
-         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-               <Button size="sm" onClick={() => setEditVoucher(null)}><Plus className="w-4 h-4 mr-2" /> Add Voucher</Button>
-            </DialogTrigger>
-            <DialogContent>
-               <DialogHeader><DialogTitle>{editVoucher ? "Edit Voucher" : "Add Voucher"}</DialogTitle></DialogHeader>
-               <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                       <Label>Code</Label>
-                       <Input name="code" defaultValue={editVoucher?.code} required />
-                    </div>
-                    <div className="space-y-2">
-                       <Label>Discount Amount</Label>
-                       <Input name="discount" type="number" defaultValue={editVoucher?.discount} required />
-                    </div>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                       <Label>Min Spend</Label>
-                       <Input name="minSpend" type="number" defaultValue={editVoucher?.minSpend} required />
-                    </div>
-                    <div className="space-y-2">
-                       <Label>Point Cost</Label>
-                       <Input name="pointCost" type="number" defaultValue={editVoucher?.pointCost} required />
-                    </div>
-                 </div>
-                 <div className="space-y-2">
-                    <Label>Short Description</Label>
-                    <Input name="description" defaultValue={editVoucher?.description} />
-                 </div>
-                 <div className="space-y-2">
-                    <Label>Conditions</Label>
-                    <Input name="detailedConditions" defaultValue={editVoucher?.detailedConditions} />
-                 </div>
-                 <DialogFooter><Button type="submit">{editVoucher ? "Update" : "Create"}</Button></DialogFooter>
-               </form>
-            </DialogContent>
-         </Dialog>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Voucher Management</CardTitle>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" onClick={() => setEditVoucher(null)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Voucher
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editVoucher ? "Edit Voucher" : "Add New Voucher"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Code (e.g., SAVE10)</Label>
+                  <Input name="code" defaultValue={editVoucher?.code} required placeholder="ABCXYZ" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Discount Amount (VND)</Label>
+                  <Input
+                    name="discount"
+                    type="number"
+                    defaultValue={editVoucher?.discount}
+                    required
+                    placeholder="10000"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Min Spend (VND)</Label>
+                  <Input
+                    name="minSpend"
+                    type="number"
+                    defaultValue={editVoucher?.minSpend}
+                    required
+                    placeholder="50000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Point Cost</Label>
+                  <Input
+                    name="pointCost"
+                    type="number"
+                    defaultValue={editVoucher?.pointCost}
+                    required
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input
+                  name="description"
+                  defaultValue={editVoucher?.description}
+                  placeholder="Short description"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Conditions</Label>
+                <Input
+                  name="detailedConditions"
+                  defaultValue={editVoucher?.detailedConditions}
+                  placeholder="Detailed usage conditions"
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="submit">
+                  {editVoucher ? "Update Voucher" : "Create Voucher"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
+
       <CardContent>
-         <Table>
-           <TableHeader>
-             <TableRow>
-               <TableHead>Code</TableHead>
-               <TableHead>Discount</TableHead>
-               <TableHead>Min Spend</TableHead>
-               <TableHead>Point Cost</TableHead>
-               <TableHead>Action</TableHead>
-             </TableRow>
-           </TableHeader>
-           <TableBody>
-             {vouchers.map((v: any) => (
-               <TableRow key={v.id}>
-                 <TableCell className="font-mono font-bold">{v.code}</TableCell>
-                 <TableCell>{v.discount.toLocaleString()}đ</TableCell>
-                 <TableCell>{v.minSpend.toLocaleString()}đ</TableCell>
-                 <TableCell>{v.pointCost}</TableCell>
-                 <TableCell>
-                   <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { setEditVoucher(v); setIsDialogOpen(true); }}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteVoucher(v.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                   </div>
-                 </TableCell>
-               </TableRow>
-             ))}
-           </TableBody>
-         </Table>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Code</TableHead>
+              <TableHead>Discount</TableHead>
+              <TableHead>Min Spend</TableHead>
+              <TableHead>Point Cost</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {vouchers.map((v) => (
+              <TableRow key={v.id}>
+                <TableCell className="font-mono font-bold text-primary">
+                  {v.code}
+                </TableCell>
+                <TableCell>{v.discount?.toLocaleString()}đ</TableCell>
+                <TableCell>{v.minSpend?.toLocaleString()}đ</TableCell>
+                <TableCell>{v.pointCost}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditVoucher(v);
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(v.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+
+            {vouchers.length === 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center text-muted-foreground py-8"
+                >
+                  No vouchers found. Click "Add Voucher" to create one.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
-  )
+  );
 }
-
 function FeedbacksTab({ products, deleteFeedback }: any) {
   // Flatten feedbacks from all products
   const allFeedbacks = products.flatMap((p: any) => 
