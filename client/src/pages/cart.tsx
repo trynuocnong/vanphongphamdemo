@@ -6,16 +6,16 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trash2, ArrowRight, Ticket } from "lucide-react";
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 
 export default function Cart() {
-  const { cart, removeFromCart, updateCartQuantity, checkout, user, vouchers } = useStore();
+  const { cart, removeFromCart, updateCartQuantity, user, vouchers, appliedVoucherId, setAppliedVoucherId } = useStore();
+  const [, navigate] = useLocation();
   const [voucherCode, setVoucherCode] = useState("");
-  const [appliedVoucherId, setAppliedVoucherId] = useState<string | undefined>(undefined);
 
   const subtotal = cart.reduce((sum, item) => sum + item.priceUsed * item.quantity, 0);
-  
+
   // Auto-apply best voucher logic could go here, but let's stick to manual for now
   const appliedVoucher = appliedVoucherId ? vouchers.find(v => v.id === appliedVoucherId) : null;
   const discount = appliedVoucher ? appliedVoucher.discount : 0;
@@ -24,11 +24,11 @@ export default function Cart() {
   const handleApplyVoucher = () => {
     const voucher = vouchers.find(v => v.code === voucherCode);
     if (voucher) {
-       if (subtotal >= voucher.minSpend) {
-          setAppliedVoucherId(voucher.id);
-       } else {
-          alert(`Minimum spend of ${voucher.minSpend.toLocaleString()} required`);
-       }
+      if (subtotal >= voucher.minSpend) {
+        setAppliedVoucherId(voucher.id);
+      } else {
+        alert(`Minimum spend of ${voucher.minSpend.toLocaleString()} required`);
+      }
     } else {
       alert("Invalid voucher code");
     }
@@ -61,31 +61,31 @@ export default function Cart() {
                 <div className="flex justify-between">
                   <div>
                     <h3 className="font-medium">{item.product.name}</h3>
-                    <p className="text-sm text-muted-foreground capitalize">{item.product.category}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{item.product.categoryName}</p>
                     {item.priceUsed < item.product.price && (
                       <span className="text-xs text-green-600 font-medium">Offer Price Applied</span>
                     )}
                   </div>
                   <p className="font-bold">{(item.priceUsed * item.quantity).toLocaleString()}đ</p>
                 </div>
-                
+
                 <div className="flex justify-between items-center mt-4">
                   <div className="flex items-center gap-2">
-                    <Button 
+                    <Button
                       variant="outline" size="icon" className="h-8 w-8"
                       onClick={() => updateCartQuantity(item.productId, item.quantity - 1)}
                     >
                       -
                     </Button>
                     <span className="w-8 text-center">{item.quantity}</span>
-                    <Button 
+                    <Button
                       variant="outline" size="icon" className="h-8 w-8"
                       onClick={() => updateCartQuantity(item.productId, item.quantity + 1)}
                     >
                       +
                     </Button>
                   </div>
-                  <Button 
+                  <Button
                     variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"
                     onClick={() => removeFromCart(item.productId)}
                   >
@@ -102,22 +102,22 @@ export default function Cart() {
           <Card>
             <CardContent className="p-6 space-y-6">
               <h3 className="font-serif text-xl font-bold">Order Summary</h3>
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{subtotal.toLocaleString()}đ</span>
                 </div>
-                
+
                 {appliedVoucher && (
-                   <div className="flex justify-between text-green-600">
-                     <span>Voucher ({appliedVoucher.code})</span>
-                     <span>-{discount.toLocaleString()}đ</span>
-                   </div>
+                  <div className="flex justify-between text-green-600">
+                    <span>Voucher ({appliedVoucher.code})</span>
+                    <span>-{discount.toLocaleString()}đ</span>
+                  </div>
                 )}
-                
+
                 <Separator />
-                
+
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>{total.toLocaleString()}đ</span>
@@ -126,10 +126,10 @@ export default function Cart() {
 
               {/* Voucher Input */}
               <div className="flex gap-2">
-                <Input 
-                  placeholder="Voucher Code" 
-                  value={voucherCode} 
-                  onChange={(e) => setVoucherCode(e.target.value)} 
+                <Input
+                  placeholder="Voucher Code"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value)}
                 />
                 <Button variant="outline" onClick={handleApplyVoucher}>Apply</Button>
               </div>
@@ -139,27 +139,27 @@ export default function Cart() {
                   <p className="text-xs font-medium text-muted-foreground">Your Vouchers:</p>
                   <div className="flex flex-wrap gap-2">
                     {user.vouchers.map(vid => {
-                       const v = vouchers.find(v => v.id === vid);
-                       if (!v) return null;
-                       return (
-                         <Badge 
-                           key={vid} 
-                           variant="secondary" 
-                           className="cursor-pointer hover:bg-primary/20"
-                           onClick={() => { setVoucherCode(v.code); }}
-                         >
-                           {v.code}
-                         </Badge>
-                       )
+                      const v = vouchers.find(v => v.id === vid);
+                      if (!v) return null;
+                      return (
+                        <Badge
+                          key={vid}
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-primary/20"
+                          onClick={() => { setVoucherCode(v.code); }}
+                        >
+                          {v.code}
+                        </Badge>
+                      )
                     })}
                   </div>
                 </div>
               )}
 
-              <Button className="w-full h-12 text-lg" onClick={() => checkout(appliedVoucherId)}>
-                Checkout <ArrowRight className="ml-2 w-4 h-4" />
+              <Button className="w-full h-12 text-lg" onClick={() => navigate("/checkout")}>
+                Proceed to Checkout <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
-              
+
               <p className="text-xs text-center text-muted-foreground">
                 You will earn {Math.floor(total / 10000)} points with this order.
               </p>
