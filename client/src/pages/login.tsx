@@ -3,14 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { registerUser, loginUser } from "@/services/userService";
+import { useStore } from "@/lib/store";
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
+  const { login } = useStore();
 
   const [role, setRole] = useState<"user" | "admin">("user");
   const [email, setEmail] = useState("");
@@ -21,37 +22,36 @@ export default function Login() {
   const [regPass, setRegPass] = useState("");
 
   // --- LOGIN ---
-const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    const user = await loginUser(email, password, role);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const user = await loginUser(email, password);
 
-    if (!user) {
-      toast({
-        title: "Login failed",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
-      return;
+      if (!user) {
+        toast.error("Invalid email or password");
+        return;
+      }
+
+      // Check role matches
+      if (user.role !== role) {
+        toast.error(`This account is not a ${role} account`);
+        return;
+      }
+
+      // Use store's login function to update state
+      const success = login(user.email, user.role);
+
+      if (success) {
+        toast.success(`Welcome back, ${user.name}!`);
+        // Small delay to ensure state is updated before navigation
+        setTimeout(() => {
+          setLocation(user.role === "admin" ? "/admin" : "/");
+        }, 100);
+      }
+    } catch {
+      toast.error("Server error, please try again");
     }
-
-    // ✅ BẮT BUỘC PHẢI CÓ
-    localStorage.setItem("userId", user.id);
-
-    // Đã có
-    localStorage.setItem("userRole", user.role);
-    localStorage.setItem("userEmail", user.email);
-
-    toast({ title: "Login success" });
-    setLocation(user.role === "admin" ? "/admin" : "/");
-  } catch {
-    toast({
-      title: "Error",
-      description: "Server error",
-      variant: "destructive",
-    });
-  }
-};
+  };
 
   // --- REGISTER ---
   const handleRegister = async (e: React.FormEvent) => {
@@ -64,18 +64,12 @@ const handleLogin = async (e: React.FormEvent) => {
         role: "user",
       });
 
-      toast({
-        title: "Register success",
-        description: "Account created",
-      });
+      toast.success("Account created successfully! You can now login.");
 
       setEmail(regEmail);
       setPassword("");
     } catch {
-      toast({
-        title: "Register failed",
-        variant: "destructive",
-      });
+      toast.error("Registration failed, please try again");
     }
   };
 

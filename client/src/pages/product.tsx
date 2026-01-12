@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,19 +14,28 @@ import {
 } from "@/components/ui/dialog";
 import { Star, Truck, ShieldCheck, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import toast from "react-hot-toast";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { isAfter, parseISO, addHours } from "date-fns";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { cn } from "@/lib/utils";
 
 // Import services theo logic File 1
 import { getProducts } from "@/services/productService";
-import { addToCart } from "@/services/cartService";
 import { getOffers, createOffer } from "@/services/offerService";
+import { useStore } from "@/lib/store";
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const { toast } = useToast();
+  const { user, addToCart: addToCartStore } = useStore();
 
   // --- STATE MANAGEMENT (Theo File 1) ---
   const [products, setProducts] = useState<any[]>([]);
@@ -33,14 +43,26 @@ export default function ProductDetail() {
   const [offerAmount, setOfferAmount] = useState("");
   const [offerMessage, setOfferMessage] = useState("");
   const [isOfferOpen, setIsOfferOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [quantity, setQuantity] = useState(1);
 
-  const userId = localStorage.getItem("userId");
+  const userId = user?.id;
 
   // Fetch data khi component mount
   useEffect(() => {
     getProducts().then(setProducts);
     getOffers().then(setOffers);
   }, []);
+
+  // Sync carousel with thumbnail selection
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    carouselApi.on("select", () => {
+      setSelectedImageIndex(carouselApi.selectedScrollSnap());
+    });
+  }, [carouselApi]);
 
   const product = products.find((p) => p.id === id);
 
@@ -51,17 +73,17 @@ export default function ProductDetail() {
   // --- LOGIC TÍNH TOÁN GIÁ & OFFER (Theo File 1) ---
   const acceptedOffer = userId
     ? offers.find((o) => {
-        if (
-          o.productId === product.id &&
-          o.userId === userId &&
-          o.status === "accepted" &&
-          o.acceptedAt
-        ) {
-          const expiry = addHours(parseISO(o.acceptedAt), 24);
-          return isAfter(expiry, new Date());
-        }
-        return false;
-      })
+      if (
+        o.productId === product.id &&
+        o.userId === userId &&
+        o.status === "accepted" &&
+        o.acceptedAt
+      ) {
+        const expiry = addHours(parseISO(o.acceptedAt), 24);
+        return isAfter(expiry, new Date());
+      }
+      return false;
+    })
     : null;
 
   const activePrice = acceptedOffer ? acceptedOffer.offerPrice : product.price;
@@ -80,55 +102,68 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!userId) {
-      toast({
-        title: "Please login",
-        description: "Login to add product to cart",
-        variant: "destructive",
-      });
+      toast.error("Please login to add product to cart");
       return;
     }
 
-    // Gọi service addToCart
-    await addToCart(userId, product, 1);
+    if (quantity <= 0) {
+      toast.error("Please select a valid quantity");
+      return;
+    }
 
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    });
+    if (quantity > product.stock) {
+      toast.error(`Only ${product.stock} items available`);
+      return;
+    }
+
+    try {
+      // Gọi store's addToCart để update cả API và state
+      await addToCartStore(product, quantity, activePrice);
+      toast.success(`${quantity} x ${product.name} added to cart!`);
+      setQuantity(1); // Reset quantity after adding
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      toast.error("Failed to add to cart. Please try again.");
+    }
   };
 
   const handleOfferSubmit = async () => {
     if (!userId) {
-        toast({ title: "Please login to make an offer", variant: "destructive" });
-        return;
+      toast.error("Please login to make an offer");
+      return;
     }
 
     const price = Number(offerAmount);
     if (!price || price <= 0) {
-      toast({ title: "Invalid price", variant: "destructive" });
+      toast.error("Invalid price");
       return;
     }
 
-    // Gọi service createOffer
-    await createOffer({
-      id: crypto.randomUUID(),
-      productId: product.id,
-      userId,
-      offerPrice: price,
-      message: offerMessage,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      // Gọi service createOffer
+      await createOffer({
+        id: crypto.randomUUID(),
+        productId: product.id,
+        userId,
+        offerPrice: price,
+        message: offerMessage,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+      });
 
-    toast({ title: "Offer sent", description: "Seller will review your offer soon." });
-    setIsOfferOpen(false);
-    setOfferAmount("");
-    setOfferMessage("");
+      toast.success("Offer sent. Seller will review your offer soon.");
+      setIsOfferOpen(false);
+      setOfferAmount("");
+      setOfferMessage("");
+    } catch (error) {
+      console.error("Failed to create offer:", error);
+      toast.error("Failed to send offer. Please try again.");
+    }
   };
 
   // Safe images array (fallback nếu API chỉ trả về 1 string 'image')
-  const displayImages = product.images && product.images.length > 0 
-    ? product.images 
+  const displayImages = product.images && product.images.length > 0
+    ? product.images
     : [product.image];
 
   return (
@@ -136,28 +171,47 @@ export default function ProductDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* === SECTION 1: IMAGES === */}
         <div className="space-y-4">
-          <div className="aspect-square bg-muted rounded-lg overflow-hidden border relative">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-            {product.stock <= 0 && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <span className="text-white text-2xl font-bold border-2 border-white px-4 py-2">
-                  OUT OF STOCK
-                </span>
-              </div>
-            )}
-          </div>
+          <Carousel setApi={setCarouselApi} className="w-full">
+            <CarouselContent>
+              {displayImages.map((img: string, index: number) => (
+                <CarouselItem key={index}>
+                  <div className="aspect-square bg-muted rounded-lg overflow-hidden border relative">
+                    <img
+                      src={img}
+                      alt={`${product.name} - Image ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    {product.stock <= 0 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white text-2xl font-bold border-2 border-white px-4 py-2">
+                          OUT OF STOCK
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-4" />
+            <CarouselNext className="right-4" />
+          </Carousel>
           {/* Thumbnail list */}
           <div className="grid grid-cols-4 gap-4">
             {displayImages.map((img: string, i: number) => (
               <div
                 key={i}
-                className="aspect-square bg-muted rounded-md overflow-hidden border cursor-pointer hover:border-primary"
+                onClick={() => {
+                  setSelectedImageIndex(i);
+                  carouselApi?.scrollTo(i);
+                }}
+                className={cn(
+                  "aspect-square bg-muted rounded-md overflow-hidden border cursor-pointer transition-all",
+                  selectedImageIndex === i
+                    ? "border-primary ring-2 ring-primary ring-offset-2"
+                    : "hover:border-primary/50"
+                )}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
               </div>
             ))}
           </div>
@@ -202,7 +256,7 @@ export default function ProductDetail() {
               )}
               {/* Nếu đang hiển thị giá gốc (không có offer) thì không cần gạch ngang giá cũ trừ khi bạn có field originalPrice */}
             </div>
-            
+
             {acceptedOffer && (
               <p className="text-sm text-green-600">
                 Offer price valid for 24 hours from acceptance.
@@ -213,6 +267,45 @@ export default function ProductDetail() {
           <p className="text-muted-foreground leading-relaxed">
             {product.description}
           </p>
+
+          {/* Quantity Selector */}
+          <div className="flex items-center gap-4">
+            <Label className="text-sm font-medium">Quantity:</Label>
+            <div className="flex items-center border rounded-md">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-none"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+              >
+                -
+              </Button>
+              <Input
+                type="number"
+                min="1"
+                max={product.stock}
+                value={quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  setQuantity(Math.min(product.stock, Math.max(1, val)));
+                }}
+                className="h-10 w-20 text-center border-0 border-x rounded-none focus-visible:ring-0"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-none"
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                disabled={quantity >= product.stock}
+              >
+                +
+              </Button>
+            </div>
+            <span className="text-sm text-muted-foreground">
+              {product.stock} available
+            </span>
+          </div>
 
           <div className="flex flex-col gap-4">
             <div className="flex gap-4">
@@ -225,8 +318,8 @@ export default function ProductDetail() {
                 {product.stock <= 0
                   ? "Out of Stock"
                   : acceptedOffer
-                  ? "Buy Now at Offer Price"
-                  : "Add to Cart"}
+                    ? "Buy Now at Offer Price"
+                    : "Add to Cart"}
               </Button>
 
               {/* Logic ẩn hiện nút Make Offer giống File 1 */}
@@ -310,18 +403,17 @@ export default function ProductDetail() {
               <div key={fb.id || Math.random()} className="border-b pb-6">
                 {/* Fallback data nếu API không trả về user/date */}
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold">{fb.user || "Anonymous"}</span> 
+                  <span className="font-semibold">{fb.user || "Anonymous"}</span>
                   <span className="text-xs text-muted-foreground">
-                     {fb.date || "Recent"}
+                    {fb.date || "Recent"}
                   </span>
                 </div>
                 <div className="flex text-yellow-500 mb-2">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${
-                        i < fb.rating ? "fill-current" : "text-muted"
-                      }`}
+                      className={`w-4 h-4 ${i < fb.rating ? "fill-current" : "text-muted"
+                        }`}
                     />
                   ))}
                 </div>
