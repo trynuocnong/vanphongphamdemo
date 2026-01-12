@@ -6,7 +6,7 @@
       "email": "admin@example.com",
       "password": "123",
       "role": "admin",
-      "points": 0,
+      "points": 55,
       "vouchers": []
     },
     {
@@ -257,6 +257,43 @@
       "paymentMethod": "momo",
       "shippingFee": 30000,
       "voucherDiscount": 0
+    },
+    {
+      "id": "tuim1p4li",
+      "userId": "a1",
+      "items": [
+        {
+          "productId": "1",
+          "quantity": 1,
+          "price": 150000,
+          "name": "Premium Linen Notebook"
+        },
+        {
+          "productId": "3",
+          "quantity": 1,
+          "price": 280000,
+          "name": "Ceramic Desk Organizer"
+        },
+        {
+          "productId": "5",
+          "quantity": 1,
+          "price": 120000,
+          "name": "Minimalist Weekly Planner"
+        }
+      ],
+      "total": 550000,
+      "status": "pending",
+      "date": "2026-01-12T15:51:30.059Z",
+      "shippingAddress": {
+        "name": "trynuoclanh",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000"
+      },
+      "paymentMethod": "credit_card",
+      "shippingFee": 0,
+      "voucherDiscount": 0
     }
   ],
   "carts": [
@@ -315,8 +352,8 @@
       "quantity": 3
     },
     {
-      "id": "WcBNBj",
-      "userId": "a1",
+      "id": "baNJHW",
+      "userId": "u1",
       "productId": "1",
       "name": "Premium Linen Notebook",
       "price": 150000,
@@ -324,8 +361,17 @@
       "quantity": 1
     },
     {
-      "id": "aoBZcS",
-      "userId": "a1",
+      "id": "cFqXHQ",
+      "userId": "u1",
+      "productId": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 120000,
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 2
+    },
+    {
+      "id": "IT0pT9",
+      "userId": "u1",
       "productId": "3",
       "name": "Ceramic Desk Organizer",
       "price": 280000,
@@ -333,12 +379,12 @@
       "quantity": 1
     },
     {
-      "id": "fccVBQ",
-      "userId": "a1",
-      "productId": "5",
-      "name": "Minimalist Weekly Planner",
-      "price": 120000,
-      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "id": "1UR0to",
+      "userId": "u1",
+      "productId": "4",
+      "name": "Washi Tape Set - Earth Tones",
+      "price": 85000,
+      "image": "https://images.unsplash.com/photo-1595248883856-745a34db248a?auto=format&fit=crop&q=80&w=800",
       "quantity": 1
     }
   ]

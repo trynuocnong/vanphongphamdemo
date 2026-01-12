@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Container } from "@/components/container";
+
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, cart, logout } = useStore();
@@ -22,7 +24,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+        <div className=" flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
               <span className="font-serif text-2xl font-bold tracking-tight text-primary">Stationery.</span>
@@ -100,12 +102,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1">
-        {children}
-      </main>
+<main className="flex-1">
+  <Container>
+    {children}
+  </Container>
+</main>
+
+
 
       <footer className="border-t bg-muted/30 py-12">
-        <div className="container px-4 md:px-6">
+        <div className=" px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
              <div className="space-y-4">
                <h3 className="font-serif text-lg font-bold">Stationery.</h3>
