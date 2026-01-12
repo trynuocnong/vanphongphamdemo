@@ -72,7 +72,18 @@ export interface Order {
   total: number;
   status: "pending" | "shipping" | "completed" | "cancelled";
   date: string;
+  shippingAddress?: {
+    name: string;
+    phone: string;
+    address: string;
+    city: string;
+    postalCode: string;
+  };
+  paymentMethod?: "credit_card" | "momo" | "zalopay" | "cod";
+  shippingFee?: number;
+  voucherDiscount?: number;
 }
+
 
 export interface User {
   id: string;
@@ -200,30 +211,30 @@ export const PRODUCTS: Product[] = [
 ];
 
 export const VOUCHERS: Voucher[] = [
-  { 
-    id: "v1", 
-    code: "WELCOME10", 
-    discount: 10000, 
-    minSpend: 100000, 
-    pointCost: 0, 
+  {
+    id: "v1",
+    code: "WELCOME10",
+    discount: 10000,
+    minSpend: 100000,
+    pointCost: 0,
     description: "10k off orders over 100k",
     detailedConditions: "Valid for new users. Minimum order value 100,000 VND. Applies to all categories."
   },
-  { 
-    id: "v2", 
-    code: "SAVE50", 
-    discount: 50000, 
-    minSpend: 500000, 
-    pointCost: 500, 
+  {
+    id: "v2",
+    code: "SAVE50",
+    discount: 50000,
+    minSpend: 500000,
+    pointCost: 500,
     description: "50k off orders over 500k",
     detailedConditions: "Redeemable with 500 points. Minimum order value 500,000 VND."
   },
-  { 
-    id: "v3", 
-    code: "FREESHIP", 
-    discount: 30000, 
-    minSpend: 300000, 
-    pointCost: 300, 
+  {
+    id: "v3",
+    code: "FREESHIP",
+    discount: 30000,
+    minSpend: 300000,
+    pointCost: 300,
     description: "Free shipping (max 30k)",
     detailedConditions: "Max discount 30,000 VND. Minimum order value 300,000 VND. Cannot be combined with other offers."
   },

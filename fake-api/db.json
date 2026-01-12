@@ -214,18 +214,45 @@
       "message": "heheboi",
       "status": "rejected",
       "createdAt": "2025-12-15T06:18:08.585Z"
+    },
+    {
+      "id": "1bf61f21-bd58-4ab7-bd4d-ae47ab3f3af5",
+      "status": "pending",
+      "createdAt": "2025-12-27T03:19:28.122Z",
+      "productId": "5",
+      "userId": "u2",
+      "offerPrice": 123,
+      "message": "asda"
+    }
+  ],
+  "orders": [
+    {
+      "id": "5me06zud5",
+      "userId": "u1",
+      "items": [
+        {
+          "productId": "4",
+          "quantity": 3,
+          "price": 85000,
+          "name": "Washi Tape Set - Earth Tones"
+        }
+      ],
+      "total": 285000,
+      "status": "pending",
+      "date": "2025-12-27T03:12:56.273Z",
+      "shippingAddress": {
+        "name": "Michael Riven",
+        "phone": "0979574301",
+        "address": "123 Le Loi, District 1, HCMC",
+        "city": "Hồ chí Minh",
+        "postalCode": "123113"
+      },
+      "paymentMethod": "momo",
+      "shippingFee": 30000,
+      "voucherDiscount": 0
     }
   ],
   "carts": [
-    {
-      "id": "42c4",
-      "userId": "u2",
-      "productId": "5",
-      "name": "Minimalist Weekly Planner",
-      "price": 120000,
-      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
-      "quantity": 23
-    },
     {
       "id": "7fbc",
       "userId": "u2",
@@ -242,7 +269,7 @@
       "name": "Black Gel Pen 0.5mm",
       "price": 25000,
       "image": "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=800",
-      "quantity": 7
+      "quantity": 21
     },
     {
       "id": "798b",
@@ -297,6 +324,51 @@
       "price": 120000,
       "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
       "quantity": 1
+    },
+    {
+      "id": "Ak19Y9",
+      "userId": "u1",
+      "productId": "3",
+      "name": "Ceramic Desk Organizer",
+      "price": 280000,
+      "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
+      "quantity": 3
+    },
+    {
+      "id": "jWrJzP",
+      "userId": "u1",
+      "productId": "1",
+      "name": "Premium Linen Notebook",
+      "price": 150000,
+      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
+      "quantity": 5
+    },
+    {
+      "id": "OY76Au",
+      "userId": "u1",
+      "productId": "4",
+      "name": "Washi Tape Set - Earth Tones",
+      "price": 85000,
+      "image": "https://images.unsplash.com/photo-1595248883856-745a34db248a?auto=format&fit=crop&q=80&w=800",
+      "quantity": 1
+    },
+    {
+      "id": "Nx7lbt",
+      "userId": "u1",
+      "productId": "2",
+      "name": "Solid Brass Fountain Pen",
+      "price": 450000,
+      "image": "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 2
+    },
+    {
+      "id": "-YHNEh",
+      "userId": "u1",
+      "productId": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 120000,
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 4
     }
   ]
 }

@@ -5,19 +5,14 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import heroImg from "@assets/generated_images/minimalist_stationery_workspace_hero.png";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
-import { useEffect, useState } from "react";
-import { getProducts } from "@/services/productService";
-import { addToCart } from "@/services/cartService";
+import { useState } from "react";
+import { useStore } from "@/lib/store";
 
 export default function Home() {
-  const [products, setProducts] = useState<any[]>([]);
+  const { products, addToCart } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    getProducts().then(setProducts);
-  }, []);
 
   // ✅ Không hiển thị sản phẩm bị xóa
   const activeProducts = products.filter(p => !p.isDeleted);
@@ -52,12 +47,12 @@ export default function Home() {
     <div className="space-y-16 pb-16">
       {/* Hero Section */}
       <section className="relative h-[600px] w-full overflow-hidden flex items-center justify-center text-center">
-        <div 
-          className="absolute inset-0 bg-cover bg-center z-0" 
+        <div
+          className="absolute inset-0 bg-cover bg-center z-0"
           style={{ backgroundImage: `url(${heroImg})` }}
         />
         <div className="absolute inset-0 bg-black/20 z-10" />
-        
+
         <div className="relative z-20 space-y-6 max-w-2xl px-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
           <h1 className="text-4xl md:text-6xl font-serif font-bold text-white tracking-tight">
             Elevate Your Workspace
@@ -66,7 +61,7 @@ export default function Home() {
             Curated stationery for clarity, creativity, and calm.
           </p>
           <div className="flex gap-4 justify-center pt-4">
-             <Button size="lg" className="bg-white text-black hover:bg-white/90 border-none">Shop Collection</Button>
+            <Button size="lg" className="bg-white text-black hover:bg-white/90 border-none">Shop Collection</Button>
           </div>
         </div>
       </section>
@@ -75,110 +70,130 @@ export default function Home() {
       <div className="container px-4">
         <div className="relative max-w-xl mx-auto">
           <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-          <Input 
-             className="pl-10 h-12 text-lg shadow-sm" 
-             placeholder="Search for notebooks, pens, organizers..." 
-             value={searchTerm}
-             onChange={(e) => setSearchTerm(e.target.value)}
+          <Input
+            className="pl-10 pr-10 h-12 text-lg shadow-sm"
+            placeholder="Search for notebooks, pens, organizers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-3 top-3 h-6 w-6 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
         </div>
+        {searchTerm && (
+          <p className="text-center text-sm text-muted-foreground mt-2">
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
+          </p>
+        )}
       </div>
 
       {/* Categories Grid */}
       <section className="container px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {["Notebooks", "Writing", "Desk", "Paper"].map((cat) => (
-             <div key={cat} className="group relative aspect-square bg-muted overflow-hidden rounded-lg cursor-pointer" onClick={() => setSearchTerm(cat)}>
-               <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-colors" />
-               <div className="absolute inset-0 flex items-center justify-center">
-                 <h3 className="text-xl font-serif font-medium">{cat}</h3>
-               </div>
-             </div>
+            <div key={cat} className="group relative aspect-square bg-muted overflow-hidden rounded-lg cursor-pointer" onClick={() => setSearchTerm(cat)}>
+              <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-colors" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <h3 className="text-xl font-serif font-medium">{cat}</h3>
+              </div>
+            </div>
           ))}
         </div>
       </section>
 
       {searchTerm ? (
-        <ProductSection title="Search Results" products={filteredProducts} id="search-results" />
+        <ProductSection title="Search Results" products={filteredProducts} id="search-results" addToCart={addToCart} showEmptyState={true} />
       ) : (
         <>
-          <ProductSection title="Bestsellers" products={bestsellers} id="bestsellers" />
-          <ProductSection title="New Arrivals" products={newArrivals} id="new" />
-          {onSale.length > 0 && <ProductSection title="On Sale" products={onSale} id="sale" />}
+          <ProductSection title="Bestsellers" products={bestsellers} id="bestsellers" addToCart={addToCart} />
+          <ProductSection title="New Arrivals" products={newArrivals} id="new" addToCart={addToCart} />
+          {onSale.length > 0 && <ProductSection title="On Sale" products={onSale} id="sale" addToCart={addToCart} />}
         </>
       )}
     </div>
   );
 }
 
-function ProductSection({ title, products, id }: { title: string, products: any[], id: string }) {
+function ProductSection({ title, products, id, addToCart, showEmptyState = false }: {
+  title: string;
+  products: any[];
+  id: string;
+  addToCart: (product: any, quantity: number, priceOverride?: number) => void;
+  showEmptyState?: boolean;
+}) {
 
-  if (products.length === 0) return null;
+  if (products.length === 0 && !showEmptyState) return null;
 
   return (
     <section id={id} className="container px-4">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl font-serif font-bold text-primary">{title}</h2>
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <Card key={product.id} className="group border-none shadow-none bg-transparent">
-            <CardContent className="p-0 relative aspect-square bg-muted mb-4 overflow-hidden rounded-md">
-              <Link href={`/product/${product.id}`}>
-                <img 
-                  src={product.image} 
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </Link>
-              {product.isNew && <Badge className="absolute top-2 left-2 bg-primary">New</Badge>}
-              {product.isSale && <Badge variant="destructive" className="absolute top-2 left-2">Sale</Badge>}
-              {product.stock <= 0 && <Badge variant="secondary" className="absolute top-2 right-2 bg-black/70 text-white">Out of Stock</Badge>}
-            </CardContent>
-            <CardFooter className="p-0 block">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                   <Link href={`/product/${product.id}`}>
-                    <h3 className="font-medium text-lg leading-none mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
-                   </Link>
-                   <p className="text-sm text-muted-foreground capitalize">{product.categoryName}</p>
+
+      {products.length === 0 && showEmptyState ? (
+        <div className="text-center py-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+            <Search className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">No products found</h3>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your search terms or browse our categories
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          {products.map((product) => (
+            <Card key={product.id} className="group border-none shadow-none bg-transparent">
+              <CardContent className="p-0 relative aspect-square bg-muted mb-4 overflow-hidden rounded-md">
+                <Link href={`/product/${product.id}`}>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </Link>
+                {product.isNew && <Badge className="absolute top-2 left-2 bg-primary">New</Badge>}
+                {product.isSale && <Badge variant="destructive" className="absolute top-2 left-2">Sale</Badge>}
+                {product.stock <= 0 && <Badge variant="secondary" className="absolute top-2 right-2 bg-black/70 text-white">Out of Stock</Badge>}
+              </CardContent>
+              <CardFooter className="p-0 block">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <Link href={`/product/${product.id}`}>
+                      <h3 className="font-medium text-lg leading-none mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
+                    </Link>
+                    <p className="text-sm text-muted-foreground capitalize">{product.categoryName}</p>
+                  </div>
+                  <div className="text-right">
+                    {product.originalPrice && (
+                      <span className="text-xs text-muted-foreground line-through block">{product.originalPrice.toLocaleString()}đ</span>
+                    )}
+                    <span className="font-semibold">{product.price.toLocaleString()}đ</span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  {product.originalPrice && (
-                    <span className="text-xs text-muted-foreground line-through block">{product.originalPrice.toLocaleString()}đ</span>
-                  )}
-                  <span className="font-semibold">{product.price.toLocaleString()}đ</span>
-                </div>
-              </div>
-<Button
-  className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
-  variant="outline"
-  disabled={product.stock <= 0}
-  onClick={async () => {
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
-      alert("Please login to add products to cart");
-      return;
-    }
-
-    try {
-      await addToCart(userId, product, 1);
-      alert("Added to cart!");
-    } catch {
-      alert("Failed to add to cart");
-    }
-  }}
->
-  {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
-</Button>
+                <Button
+                  className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  variant="outline"
+                  disabled={product.stock <= 0}
+                  onClick={() => {
+                    addToCart(product, 1);
+                  }}
+                >
+                  {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
+                </Button>
 
 
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
