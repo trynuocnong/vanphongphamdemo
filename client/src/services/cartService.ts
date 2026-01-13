@@ -5,7 +5,8 @@ const API_URL = "http://localhost:3001";
 export const addToCart = async (
   userId: string,
   product: any,
-  quantity: number
+  quantity: number,
+  priceUsed?: number
 ) => {
   // kiểm tra sản phẩm đã tồn tại trong cart chưa
   const res = await fetch(
@@ -33,9 +34,34 @@ export const addToCart = async (
       userId,
       productId: product.id,
       name: product.name,
-      price: product.price,
+      price: priceUsed || product.price,
       image: product.image,
       quantity,
     }),
   });
+};
+
+export const getCartItems = async (userId: string) => {
+  const res = await fetch(`${API_URL}/carts?userId=${userId}`);
+  return res.json();
+};
+
+export const updateCartItem = async (cartItemId: string, quantity: number) => {
+  const res = await fetch(`${API_URL}/carts/${cartItemId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ quantity }),
+  });
+  return res.json();
+};
+
+export const removeCartItem = async (cartItemId: string) => {
+  return fetch(`${API_URL}/carts/${cartItemId}`, {
+    method: "DELETE",
+  });
+};
+
+export const clearUserCart = async (userId: string) => {
+  const items = await getCartItems(userId);
+  await Promise.all(items.map((item: any) => removeCartItem(item.id)));
 };

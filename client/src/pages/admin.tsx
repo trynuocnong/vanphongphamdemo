@@ -43,9 +43,9 @@ type Voucher = {
 
 
 export default function Admin() {
-  const { 
+  const {
     user, products, offers, orders, categories, users, vouchers,
-    addProduct, deleteProduct, updateProduct, 
+    addProduct, deleteProduct, updateProduct,
     addCategory, updateCategory, deleteCategory,
     addVoucher, updateVoucher, deleteVoucher,
     respondToOffer, updateOrderStatus, updateUser
@@ -56,40 +56,9 @@ export default function Admin() {
   const { toast } = useToast();
 
   if (role !== "admin") return <Redirect to="/login" />;
-// CRUD functions with fake API
- const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      name: formData.get("name"),
-      price: Number(formData.get("price")),
-      stock: Number(formData.get("stock")),
-      description: formData.get("description"),
-    };
-
-    if (editProduct) {
-      await updateProduct(editProduct.id, data);
-    } else {
-      await addProduct(data);
-    }
-
-    setIsDialogOpen(false);
-    setEditProduct(null);
-    loadProducts(); // Refresh lại state
-  };
-
-  const handleDelete = async (id: string) => {
-    await deleteProduct(id);
-    loadProducts(); // Refresh lại state
-  };
-
-  const handleUpdateUser = async (id:string,data:any)=>{
-    await updateUser(id,data);
-    setUsers(users.map(u=>u.id===id?{...u,...data}:u));
-  };
 
 
-  
+
   return (
     <div className="container px-4 py-10">
       <div className="flex justify-between items-center mb-8">
@@ -120,39 +89,28 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="products">
-          <ProductsTab 
-            products={products} 
+          <ProductsTab
+            products={products}
             categories={categories}
-            addProduct={addProduct} 
-            updateProduct={updateProduct} 
-            deleteProduct={deleteProduct} 
+            addProduct={addProduct}
+            updateProduct={updateProduct}
+            deleteProduct={deleteProduct}
           />
         </TabsContent>
 
         <TabsContent value="offers">
-          <OffersTab offers={offers} respondToOffer={respondToOffer} />
+          <OffersTab />
         </TabsContent>
 
         <TabsContent value="users">
-<<<<<<< Updated upstream
-           <UsersTab users={users} updateUser={updateUser} deleteUser={deleteUser} />
-=======
           <UsersTab users={users} updateUser={updateUser} />
         </TabsContent>
         <TabsContent value="vouchers">
           <VouchersTab />
->>>>>>> Stashed changes
         </TabsContent>
-<TabsContent value="vouchers">
-   <VouchersTab />
-</TabsContent>
 
         <TabsContent value="feedbacks">
-<<<<<<< Updated upstream
-           <FeedbacksTab products={products} deleteFeedback={deleteFeedback} />
-=======
           <FeedbacksTab products={products}/>
->>>>>>> Stashed changes
         </TabsContent>
       </Tabs>
     </div>
@@ -196,8 +154,8 @@ function OverviewTab({ orders, products }: { orders: any[], products: any[] }) {
           <CardContent><div className="text-2xl font-bold">{orders.length}</div></CardContent>
         </Card>
         <Card>
-           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending Orders</CardTitle></CardHeader>
-           <CardContent><div className="text-2xl font-bold">{pendingOrders}</div></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending Orders</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{pendingOrders}</div></CardContent>
         </Card>
       </div>
 
@@ -205,31 +163,31 @@ function OverviewTab({ orders, products }: { orders: any[], products: any[] }) {
         <Card>
           <CardHeader><CardTitle>Revenue Overview</CardTitle></CardHeader>
           <CardContent className="h-[300px]">
-             <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={revenueData}>
-                 <CartesianGrid strokeDasharray="3 3" />
-                 <XAxis dataKey="name" />
-                 <YAxis />
-                 <Tooltip />
-                 <Bar dataKey="revenue" fill="hsl(var(--primary))" />
-               </BarChart>
-             </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="revenue" fill="hsl(var(--primary))" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle>Sales by Category</CardTitle></CardHeader>
           <CardContent className="h-[300px]">
-             <ResponsiveContainer width="100%" height="100%">
-               <PieChart>
-                 <Pie data={salesByCategory} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" dataKey="value" label>
-                   {salesByCategory.map((entry, index) => (
-                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                   ))}
-                 </Pie>
-                 <Tooltip />
-                 <Legend />
-               </PieChart>
-             </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={salesByCategory} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" dataKey="value" label>
+                  {salesByCategory.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
@@ -240,7 +198,7 @@ function OverviewTab({ orders, products }: { orders: any[], products: any[] }) {
 function OrdersTab({ orders, updateStatus }: { orders: any[], updateStatus: any }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  
+
 
   const filteredOrders = orders.filter(o => {
     const matchesStatus = filterStatus === "all" || o.status === filterStatus;
@@ -255,20 +213,20 @@ function OrdersTab({ orders, updateStatus }: { orders: any[], updateStatus: any 
         <div className="flex justify-between items-center">
           <CardTitle>Order Management</CardTitle>
           <div className="flex gap-2">
-             <div className="relative">
-               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-               <Input className="pl-9 w-[200px]" placeholder="Search Order ID or Product" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-             </div>
-             <Select value={filterStatus} onValueChange={setFilterStatus}>
-               <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
-               <SelectContent>
-                 <SelectItem value="all">All Status</SelectItem>
-                 <SelectItem value="pending">Pending</SelectItem>
-                 <SelectItem value="shipping">Shipping</SelectItem>
-                 <SelectItem value="completed">Completed</SelectItem>
-                 <SelectItem value="cancelled">Cancelled</SelectItem>
-               </SelectContent>
-             </Select>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input className="pl-9 w-[200px]" placeholder="Search Order ID or Product" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            </div>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="shipping">Shipping</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardHeader>
@@ -297,17 +255,17 @@ function OrdersTab({ orders, updateStatus }: { orders: any[], updateStatus: any 
                   </Badge>
                 </TableCell>
                 <TableCell>
-                   <Select value={order.status} onValueChange={(val) => updateStatus(order.id, val)}>
-                     <SelectTrigger className="w-[110px] h-8 text-xs">
-                       <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="pending">Pending</SelectItem>
-                       <SelectItem value="shipping">Shipping</SelectItem>
-                       <SelectItem value="completed">Completed</SelectItem>
-                       <SelectItem value="cancelled">Cancelled</SelectItem>
-                     </SelectContent>
-                   </Select>
+                  <Select value={order.status} onValueChange={(val) => updateStatus(order.id, val)}>
+                    <SelectTrigger className="w-[110px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="shipping">Shipping</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
               </TableRow>
             ))}
@@ -380,12 +338,24 @@ function ProductsTab({ categories }: any) {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Inventory</CardTitle>
         <div className="flex gap-2">
-          <Input 
-             className="w-[200px]" 
-             placeholder="Search products..." 
-             value={searchTerm} 
-             onChange={e => setSearchTerm(e.target.value)} 
-          />
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-9 pr-9 w-[200px]"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2.5 top-2.5 h-5 w-5 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="h-3 w-3 text-muted-foreground" />
+              </button>
+            )}
+          </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm" onClick={() => setEditProduct(null)}><Plus className="w-4 h-4 mr-2" /> Add Product</Button>
@@ -416,10 +386,10 @@ function ProductsTab({ categories }: any) {
                   </div>
                 </div>
                 <div className="space-y-2">
-                   <Label>Description</Label>
-                   <Input name="description" defaultValue={editProduct?.description} />
+                  <Label>Description</Label>
+                  <Input name="description" defaultValue={editProduct?.description} />
                 </div>
-                
+
                 <div className="border p-4 rounded-md space-y-4 bg-muted/20">
                   <div className="flex items-center gap-2">
                     <Switch name="allowOffers" defaultChecked={editProduct?.allowOffers ?? true} />
@@ -502,10 +472,10 @@ function OffersTab() {
   const [filterStatus, setFilterStatus] = useState("all");
   const { toast } = useToast();
 
-const loadOffers = async () => {
-  const data = await getOffers();
-  setOffers(data);
-};
+  const loadOffers = async () => {
+    const data = await getOffers();
+    setOffers(data);
+  };
 
 
   useEffect(() => {
@@ -626,96 +596,13 @@ const loadOffers = async () => {
 function UsersTab({ users, updateUser }: any) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = users.filter((u: any) => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredUsers = users.filter((u: any) =>
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <Card>
-<<<<<<< Updated upstream
-       <CardHeader className="flex flex-row justify-between items-center">
-         <CardTitle>User Management</CardTitle>
-         <div className="flex gap-2">
-           <Input 
-             className="w-[200px]" 
-             placeholder="Search users..." 
-             value={searchTerm} 
-             onChange={e => setSearchTerm(e.target.value)} 
-           />
-           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Edit User</DialogTitle></DialogHeader>
-                <form onSubmit={handleUpdate} className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Name</Label>
-                    <Input name="name" defaultValue={editingUser?.name} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input name="email" defaultValue={editingUser?.email} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Role</Label>
-                    <select name="role" className="w-full h-10 px-3 rounded-md border" defaultValue={editingUser?.role}>
-                      <option value="user">User</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Points</Label>
-                    <Input name="points" type="number" defaultValue={editingUser?.points} />
-                  </div>
-                  <DialogFooter><Button type="submit">Save Changes</Button></DialogFooter>
-                </form>
-              </DialogContent>
-           </Dialog>
-         </div>
-       </CardHeader>
-       <CardContent>
-         <Table>
-           <TableHeader>
-             <TableRow>
-               <TableHead>Name</TableHead>
-               <TableHead>Email</TableHead>
-               <TableHead>Role</TableHead>
-               <TableHead>Points</TableHead>
-               <TableHead>Status</TableHead>
-               <TableHead>Action</TableHead>
-             </TableRow>
-           </TableHeader>
-           <TableBody>
-             {filteredUsers.map((u: any) => (
-               <TableRow key={u.id}>
-                 <TableCell>{u.name}</TableCell>
-                 <TableCell>{u.email}</TableCell>
-                 <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
-                 <TableCell>{u.points}</TableCell>
-                 <TableCell>{u.isBlocked ? <span className="text-red-500">Blocked</span> : <span className="text-green-500">Active</span>}</TableCell>
-                 <TableCell>
-                   <div className="flex gap-2">
-                     <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => updateUser(u.id, { isBlocked: !u.isBlocked })}
-                        className={u.isBlocked ? "text-green-600" : "text-red-600"}
-                     >
-                       {u.isBlocked ? "Unblock" : "Block"}
-                     </Button>
-                     <Button variant="ghost" size="sm" onClick={() => { setEditingUser(u); setIsDialogOpen(true); }}>
-                       <Edit className="w-4 h-4" />
-                     </Button>
-                     <Button variant="ghost" size="sm" onClick={() => deleteUser(u.id)}>
-                       <Trash2 className="w-4 h-4 text-muted-foreground" />
-                     </Button>
-                   </div>
-                 </TableCell>
-               </TableRow>
-             ))}
-           </TableBody>
-         </Table>
-       </CardContent>
-=======
       <CardHeader className="flex justify-between items-center">
         <CardTitle>User Management</CardTitle>
         <Input
@@ -777,7 +664,6 @@ function UsersTab({ users, updateUser }: any) {
           </TableBody>
         </Table>
       </CardContent>
->>>>>>> Stashed changes
     </Card>
   );
 }
@@ -827,7 +713,7 @@ function VouchersTab() { // Không cần nhận props nữa
         await addVoucher({ ...data, id: crypto.randomUUID() });
         toast({ title: "Voucher created successfully" });
       }
-      
+
       // Refresh dữ liệu và đóng dialog
       await fetchVouchers();
       setIsDialogOpen(false);
@@ -839,8 +725,8 @@ function VouchersTab() { // Không cần nhận props nữa
 
   // 3. DELETE
   const handleDelete = async (id: string) => {
-    if(!confirm("Are you sure you want to delete this voucher?")) return;
-    
+    if (!confirm("Are you sure you want to delete this voucher?")) return;
+
     try {
       await deleteVoucher(id);
       toast({ title: "Voucher deleted" });
@@ -1003,11 +889,6 @@ function VouchersTab() { // Không cần nhận props nữa
 }
 function FeedbacksTab({ products }: any) {
   // Flatten feedbacks from all products
-<<<<<<< Updated upstream
-  const allFeedbacks = products.flatMap((p: any) => 
-    p.feedbacks.map((f: any) => ({ ...f, productName: p.name, productId: p.id }))
-  );
-=======
 const allFeedbacks = products.flatMap((p: any) =>
   (p.feedbacks || []).map((f: any) => ({
     ...f,
@@ -1016,7 +897,6 @@ const allFeedbacks = products.flatMap((p: any) =>
   }))
 );
 
->>>>>>> Stashed changes
 
   return (
     <Card>
@@ -1042,7 +922,7 @@ const allFeedbacks = products.flatMap((p: any) =>
                 <TableCell>
                   <div className="flex text-yellow-500">
                     {[...Array(5)].map((_, i) => (
-                       <Star key={i} className={`w-3 h-3 ${i < f.rating ? "fill-current" : "text-gray-300"}`} />
+                      <Star key={i} className={`w-3 h-3 ${i < f.rating ? "fill-current" : "text-gray-300"}`} />
                     ))}
                   </div>
                 </TableCell>
