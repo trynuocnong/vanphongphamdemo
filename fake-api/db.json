@@ -214,6 +214,24 @@
       "message": "heheboi",
       "status": "rejected",
       "createdAt": "2025-12-15T06:18:08.585Z"
+    },
+    {
+      "id": "d9ba96bc-aed9-4a94-ac6b-dd1e37f0522f",
+      "status": "pending",
+      "createdAt": "2025-12-17T06:34:56.119Z",
+      "productId": "5",
+      "userId": "u2",
+      "offerPrice": 11111111,
+      "message": "like\n"
+    },
+    {
+      "id": "669d0168-5f9a-4532-aea2-6c7494b06027",
+      "status": "pending",
+      "createdAt": "2025-12-17T06:35:40.672Z",
+      "productId": "4",
+      "userId": "u2",
+      "offerPrice": 112213123,
+      "message": "2131"
     }
   ],
   "carts": [
