@@ -48,8 +48,7 @@ export default function Admin() {
     addProduct, deleteProduct, updateProduct, 
     addCategory, updateCategory, deleteCategory,
     addVoucher, updateVoucher, deleteVoucher,
-    respondToOffer, updateOrderStatus, updateUser, deleteUser,
-    deleteFeedback
+    respondToOffer, updateOrderStatus, updateUser
   } = useStore();
   const role = localStorage.getItem("userRole");
 
@@ -135,14 +134,25 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="users">
+<<<<<<< Updated upstream
            <UsersTab users={users} updateUser={updateUser} deleteUser={deleteUser} />
+=======
+          <UsersTab users={users} updateUser={updateUser} />
+        </TabsContent>
+        <TabsContent value="vouchers">
+          <VouchersTab />
+>>>>>>> Stashed changes
         </TabsContent>
 <TabsContent value="vouchers">
    <VouchersTab />
 </TabsContent>
 
         <TabsContent value="feedbacks">
+<<<<<<< Updated upstream
            <FeedbacksTab products={products} deleteFeedback={deleteFeedback} />
+=======
+          <FeedbacksTab products={products}/>
+>>>>>>> Stashed changes
         </TabsContent>
       </Tabs>
     </div>
@@ -613,32 +623,17 @@ const loadOffers = async () => {
 }
 
 
-function UsersTab({ users, updateUser, deleteUser }: any) {
+function UsersTab({ users, updateUser }: any) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingUser, setEditingUser] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const filteredUsers = users.filter((u: any) => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      role: formData.get("role"),
-      points: parseInt(formData.get("points") as string)
-    };
-    updateUser(editingUser.id, data);
-    setIsDialogOpen(false);
-    setEditingUser(null);
-  };
-
   return (
     <Card>
+<<<<<<< Updated upstream
        <CardHeader className="flex flex-row justify-between items-center">
          <CardTitle>User Management</CardTitle>
          <div className="flex gap-2">
@@ -720,9 +715,73 @@ function UsersTab({ users, updateUser, deleteUser }: any) {
            </TableBody>
          </Table>
        </CardContent>
+=======
+      <CardHeader className="flex justify-between items-center">
+        <CardTitle>User Management</CardTitle>
+        <Input
+          className="w-[250px]"
+          placeholder="Search users..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+      </CardHeader>
+
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Points</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {filteredUsers.map((u: any) => (
+              <TableRow key={u.id}>
+                <TableCell>{u.name}</TableCell>
+                <TableCell>{u.email}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{u.role}</Badge>
+                </TableCell>
+                <TableCell>{u.points}</TableCell>
+                <TableCell>
+                  {u.isBlocked
+                    ? <span className="text-red-500">Blocked</span>
+                    : <span className="text-green-600">Active</span>}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      updateUser(u.id, { isBlocked: !u.isBlocked })
+                    }
+                  >
+                    {u.isBlocked ? "Unblock" : "Block"}
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+
+            {filteredUsers.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  No users found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+>>>>>>> Stashed changes
     </Card>
-  )
+  );
 }
+
 
 function VouchersTab() { // Không cần nhận props nữa
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
@@ -942,11 +1001,22 @@ function VouchersTab() { // Không cần nhận props nữa
     </Card>
   );
 }
-function FeedbacksTab({ products, deleteFeedback }: any) {
+function FeedbacksTab({ products }: any) {
   // Flatten feedbacks from all products
+<<<<<<< Updated upstream
   const allFeedbacks = products.flatMap((p: any) => 
     p.feedbacks.map((f: any) => ({ ...f, productName: p.name, productId: p.id }))
   );
+=======
+const allFeedbacks = products.flatMap((p: any) =>
+  (p.feedbacks || []).map((f: any) => ({
+    ...f,
+    productName: p.name,
+    productId: p.id,
+  }))
+);
+
+>>>>>>> Stashed changes
 
   return (
     <Card>
@@ -962,7 +1032,6 @@ function FeedbacksTab({ products, deleteFeedback }: any) {
               <TableHead>Rating</TableHead>
               <TableHead>Comment</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -979,11 +1048,6 @@ function FeedbacksTab({ products, deleteFeedback }: any) {
                 </TableCell>
                 <TableCell className="max-w-[200px] truncate">{f.comment}</TableCell>
                 <TableCell>{f.date}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm" onClick={() => deleteFeedback(f.productId, f.id)}>
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
             {allFeedbacks.length === 0 && (

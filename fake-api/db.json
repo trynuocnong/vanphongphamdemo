@@ -6,21 +6,92 @@
       "email": "admin@example.com",
       "password": "123",
       "role": "admin",
+<<<<<<< Updated upstream
       "points": 0,
       "vouchers": []
+=======
+      "points": 9935000,
+      "vouchers": [
+        "v2",
+        "v3"
+      ],
+      "isBlocked": false
+>>>>>>> Stashed changes
     },
     {
       "id": "u2",
       "name": "Tu",
       "email": "user@example.com",
-      "password": "123",
+      "password": "12345",
       "role": "user",
-      "points": 1500,
+      "points": 0,
       "vouchers": [
-        "v1"
+        "v1",
+        "v2",
+        "7c745809-cb0c-4b51-adc8-f2a505a4b9cb"
       ],
       "phone": "0901234567",
       "address": "123 Le Loi, District 1, HCMC"
+<<<<<<< Updated upstream
+=======
+    },
+    
+    {
+      "id": "5273",
+      "name": "Tri",
+      "email": "tri@example.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": true
+    },
+    {
+      "id": "eded",
+      "name": "Tri",
+      "email": "tri@example.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": true
+    },
+    {
+      "id": "249c",
+      "name": "Tri",
+      "email": "tri@example.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": true
+    },
+    {
+      "id": "8569",
+      "name": "Tri",
+      "email": "tri@example.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": true
+    },
+    {
+      "id": "25d2",
+      "name": "Tri",
+      "email": "tri@example.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": true
+    },
+    {
+      "id": "6fe1",
+      "name": "Tri",
+      "email": "tri@example.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": true
+    },
+    {
+      "id": "d119",
+      "name": "Tri",
+      "email": "tri@example.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": true
+>>>>>>> Stashed changes
     }
   ],
   "categories": [
@@ -82,32 +153,16 @@
       "createdAt": "2023-10-01T10:00:00Z"
     },
     {
-      "id": "2",
       "name": "Solid Brass Fountain Pen",
       "price": 450000,
-      "originalPrice": 550000,
-      "description": "Weighted brass pen that ages beautifully over time. Fine nib included.",
       "stock": 12,
-      "sold": 34,
+      "description": "Weighted brass pen that ages beautifully over time. Fine nib included.",
       "categoryId": "c2",
       "categoryName": "Writing",
-      "image": "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=800",
-      "images": [
-        "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=800"
-      ],
-      "isSale": true,
-      "allowOffers": true,
+      "allowOffers": false,
       "autoAcceptPrice": 420000,
-      "feedbacks": [
-        {
-          "id": "f3",
-          "user": "Charlie",
-          "rating": 5,
-          "comment": "Heavy and smooth.",
-          "date": "2023-09-28"
-        }
-      ],
-      "createdAt": "2023-09-15T10:00:00Z"
+      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
+      "id": "2"
     },
     {
       "id": "3",
@@ -189,6 +244,24 @@
       "pointCost": 300,
       "description": "Free shipping (max 30k)",
       "detailedConditions": "Max discount 30,000 VND. Minimum order value 300,000 VND. Cannot be combined with other offers."
+    },
+    {
+      "code": "TRI2025",
+      "discount": 10000,
+      "minSpend": 20000,
+      "pointCost": 1000,
+      "description": "100%",
+      "detailedConditions": "Content Farming",
+      "id": "7c745809-cb0c-4b51-adc8-f2a505a4b9cb"
+    },
+    {
+      "id": "9eb51046-39ff-4181-90e7-134d98cd7fdc",
+      "code": "TU2026",
+      "discount": 20000,
+      "minSpend": 20000,
+      "pointCost": 1000,
+      "description": "100%",
+      "detailedConditions": "Content Farming"
     }
   ],
   "offers": [
@@ -216,6 +289,7 @@
       "createdAt": "2025-12-15T06:18:08.585Z"
     },
     {
+<<<<<<< Updated upstream
       "id": "d9ba96bc-aed9-4a94-ac6b-dd1e37f0522f",
       "status": "pending",
       "createdAt": "2025-12-17T06:34:56.119Z",
@@ -223,19 +297,209 @@
       "userId": "u2",
       "offerPrice": 11111111,
       "message": "like\n"
+=======
+      "id": "1bf61f21-bd58-4ab7-bd4d-ae47ab3f3af5",
+      "status": "rejected",
+      "createdAt": "2025-12-27T03:19:28.122Z",
+      "productId": "5",
+      "userId": "u2",
+      "offerPrice": 123,
+      "message": "asda"
+    },
+    {
+      "id": "5023ccb1-3885-4816-8c62-323ef28eeace",
+      "status": "accepted",
+      "createdAt": "2026-01-13T15:16:46.289Z",
+      "productId": "5",
+      "userId": "a1",
+      "offerPrice": 100000,
+      "message": "t",
+      "acceptedAt": "2026-01-13T15:17:02.276Z"
+    },
+    {
+      "id": "18bdb1f0-669f-4905-94b0-cf5b26bcb1ce",
+      "status": "accepted",
+      "createdAt": "2026-01-13T15:22:00.302Z",
+      "productId": "5",
+      "userId": "u1",
+      "offerPrice": 100000,
+      "message": "hehe",
+      "acceptedAt": "2026-01-13T16:44:11.621Z"
+    },
+    {
+      "id": "031718d8-8427-469f-93df-546c64634383",
+      "status": "accepted",
+      "createdAt": "2026-01-13T16:05:56.147Z",
+      "productId": "5",
+      "userId": "u2",
+      "offerPrice": 20000,
+      "message": "please",
+      "acceptedAt": "2026-01-13T16:06:18.176Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": "5me06zud5",
+      "userId": "u1",
+      "items": [
+        {
+          "productId": "4",
+          "quantity": 3,
+          "price": 85000,
+          "name": "Washi Tape Set - Earth Tones"
+        }
+      ],
+      "total": 285000,
+      "status": "pending",
+      "date": "2025-12-27T03:12:56.273Z",
+      "shippingAddress": {
+        "name": "Michael Riven",
+        "phone": "0979574301",
+        "address": "123 Le Loi, District 1, HCMC",
+        "city": "Hồ chí Minh",
+        "postalCode": "123113"
+      },
+      "paymentMethod": "momo",
+      "shippingFee": 30000,
+      "voucherDiscount": 0
+>>>>>>> Stashed changes
     },
     {
       "id": "669d0168-5f9a-4532-aea2-6c7494b06027",
       "status": "pending",
+<<<<<<< Updated upstream
       "createdAt": "2025-12-17T06:35:40.672Z",
       "productId": "4",
       "userId": "u2",
       "offerPrice": 112213123,
       "message": "2131"
+=======
+      "date": "2026-01-12T15:51:30.059Z",
+      "shippingAddress": {
+        "name": "trynuoclanh",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000"
+      },
+      "paymentMethod": "credit_card",
+      "shippingFee": 0,
+      "voucherDiscount": 0
+    },
+    {
+      "id": "0h0q7w2b3",
+      "userId": "a1",
+      "items": [
+        {
+          "productId": "1",
+          "quantity": 10,
+          "price": 150000,
+          "name": "Premium Linen Notebook"
+        }
+      ],
+      "total": 1500000,
+      "status": "shipping",
+      "date": "2026-01-13T15:16:13.649Z",
+      "shippingAddress": {
+        "name": "Tu Nguyen",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000"
+      },
+      "paymentMethod": "momo",
+      "shippingFee": 0,
+      "voucherDiscount": 0
+    },
+    {
+      "id": "19a3",
+      "userId": "u2",
+      "items": [
+        {
+          "productId": "5",
+          "name": "Minimalist Weekly Planner",
+          "quantity": 32,
+          "price": 120000
+        },
+        {
+          "productId": "4",
+          "name": "Washi Tape Set - Earth Tones",
+          "quantity": 10,
+          "price": 85000
+        },
+        {
+          "productId": "3",
+          "name": "Ceramic Desk Organizer",
+          "quantity": 1,
+          "price": 280000
+        },
+        {
+          "productId": "2",
+          "name": "Solid Brass Fountain Pen",
+          "quantity": 1,
+          "price": 450000
+        },
+        {
+          "productId": "1",
+          "name": "Premium Linen Notebook",
+          "quantity": 3,
+          "price": 150000
+        }
+      ],
+      "total": 5870000,
+      "status": "pending",
+      "date": "2026-01-13T16:05:07.308Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "name": "Tu",
+        "phone": "0901234567",
+        "address": "123 Le Loi, District 1, HCMC",
+        "city": "Bình Dương",
+        "postalCode": "75000"
+      },
+      "paymentMethod": "momo"
+    },
+    {
+      "id": "ecab",
+      "userId": "u2",
+      "items": [
+        {
+          "productId": "5",
+          "name": "Minimalist Weekly Planner",
+          "quantity": 19,
+          "price": 120000
+        },
+        {
+          "productId": "3",
+          "name": "Ceramic Desk Organizer",
+          "quantity": 13,
+          "price": 280000
+        },
+        {
+          "productId": "4",
+          "name": "Washi Tape Set - Earth Tones",
+          "quantity": 8,
+          "price": 85000
+        }
+      ],
+      "total": 6600000,
+      "status": "completed",
+      "date": "2026-01-13T16:40:57.558Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "name": "Tu",
+        "phone": "0901234567",
+        "address": "123 Le Loi, District 1, HCMC",
+        "city": "Binh Duong",
+        "postalCode": "820000"
+      },
+      "paymentMethod": "cod"
+>>>>>>> Stashed changes
     }
   ],
   "carts": [
     {
+<<<<<<< Updated upstream
       "id": "42c4",
       "userId": "u2",
       "productId": "5",
@@ -292,11 +556,15 @@
     {
       "id": "WcBNBj",
       "userId": "a1",
+=======
+      "id": "baNJHW",
+      "userId": "u1",
+>>>>>>> Stashed changes
       "productId": "1",
       "name": "Premium Linen Notebook",
       "price": 150000,
       "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
-      "quantity": 1
+      "quantity": 2
     },
     {
       "id": "aoBZcS",
@@ -305,7 +573,7 @@
       "name": "Ceramic Desk Organizer",
       "price": 280000,
       "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
-      "quantity": 1
+      "quantity": 2
     },
     {
       "id": "fccVBQ",
@@ -315,6 +583,33 @@
       "price": 120000,
       "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
       "quantity": 1
+    },
+    {
+      "id": "fBIOCE",
+      "userId": "a1",
+      "productId": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 100000,
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 5
+    },
+    {
+      "id": "L_70TR",
+      "userId": "u2",
+      "productId": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 20000,
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 4
+    },
+    {
+      "id": "CC7L-n",
+      "userId": "a1",
+      "productId": "3",
+      "name": "Ceramic Desk Organizer",
+      "price": 280000,
+      "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
+      "quantity": 3
     }
   ]
 }

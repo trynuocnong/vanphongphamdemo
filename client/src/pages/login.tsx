@@ -26,6 +26,7 @@ const handleLogin = async (e: React.FormEvent) => {
   try {
     const user = await loginUser(email, password, role);
 
+<<<<<<< Updated upstream
     if (!user) {
       toast({
         title: "Login failed",
@@ -33,6 +34,33 @@ const handleLogin = async (e: React.FormEvent) => {
         variant: "destructive",
       });
       return;
+=======
+      if (!user) {
+        toast.error("Invalid email or password");
+        return;
+      }
+
+      // Check role matches
+      if (user.role !== role) {
+        toast.error(`This account is not a ${role} account`);
+        return;
+      }
+
+      // Use store's login function to update state
+      const success = login(user.email, user.role);
+
+if (success) {
+  localStorage.setItem("userRole", user.role);
+  toast.success(`Welcome back, ${user.name}!`);
+
+  setTimeout(() => {
+    setLocation(user.role === "admin" ? "/admin" : "/");
+  }, 0);
+}
+
+    } catch {
+      toast.error("Server error, please try again");
+>>>>>>> Stashed changes
     }
 
     // ✅ BẮT BUỘC PHẢI CÓ
