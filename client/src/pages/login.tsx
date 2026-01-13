@@ -42,7 +42,7 @@ export default function Login() {
       const success = login(user.email, user.role);
 
 if (success) {
-  localStorage.setItem("userRole", user.role); // 👈 BẮT BUỘC
+  localStorage.setItem("userRole", user.role);
   toast.success(`Welcome back, ${user.name}!`);
 
   setTimeout(() => {

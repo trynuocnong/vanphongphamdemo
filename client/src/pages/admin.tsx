@@ -48,8 +48,7 @@ export default function Admin() {
     addProduct, deleteProduct, updateProduct,
     addCategory, updateCategory, deleteCategory,
     addVoucher, updateVoucher, deleteVoucher,
-    respondToOffer, updateOrderStatus, updateUser, deleteUser,
-    deleteFeedback
+    respondToOffer, updateOrderStatus, updateUser
   } = useStore();
   const role = localStorage.getItem("userRole");
 
@@ -104,14 +103,14 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="users">
-          <UsersTab users={users} updateUser={updateUser} deleteUser={deleteUser} />
+          <UsersTab users={users} updateUser={updateUser} />
         </TabsContent>
         <TabsContent value="vouchers">
           <VouchersTab />
         </TabsContent>
 
         <TabsContent value="feedbacks">
-          <FeedbacksTab products={products} deleteFeedback={deleteFeedback} />
+          <FeedbacksTab products={products}/>
         </TabsContent>
       </Tabs>
     </div>
@@ -594,82 +593,26 @@ function OffersTab() {
 }
 
 
-function UsersTab({ users, updateUser, deleteUser }: any) {
+function UsersTab({ users, updateUser }: any) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingUser, setEditingUser] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const filteredUsers = users.filter((u: any) =>
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      role: formData.get("role"),
-      points: parseInt(formData.get("points") as string)
-    };
-    updateUser(editingUser.id, data);
-    setIsDialogOpen(false);
-    setEditingUser(null);
-  };
-
   return (
     <Card>
-      <CardHeader className="flex flex-row justify-between items-center">
+      <CardHeader className="flex justify-between items-center">
         <CardTitle>User Management</CardTitle>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="pl-9 pr-9 w-[200px]"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-2.5 top-2.5 h-5 w-5 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
-                aria-label="Clear search"
-              >
-                <X className="h-3 w-3 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Edit User</DialogTitle></DialogHeader>
-              <form onSubmit={handleUpdate} className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Name</Label>
-                  <Input name="name" defaultValue={editingUser?.name} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input name="email" defaultValue={editingUser?.email} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Role</Label>
-                  <select name="role" className="w-full h-10 px-3 rounded-md border" defaultValue={editingUser?.role}>
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Points</Label>
-                  <Input name="points" type="number" defaultValue={editingUser?.points} />
-                </div>
-                <DialogFooter><Button type="submit">Save Changes</Button></DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Input
+          className="w-[250px]"
+          placeholder="Search users..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
       </CardHeader>
+
       <CardContent>
         <Table>
           <TableHeader>
@@ -682,40 +625,49 @@ function UsersTab({ users, updateUser, deleteUser }: any) {
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {filteredUsers.map((u: any) => (
               <TableRow key={u.id}>
                 <TableCell>{u.name}</TableCell>
                 <TableCell>{u.email}</TableCell>
-                <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
-                <TableCell>{u.points}</TableCell>
-                <TableCell>{u.isBlocked ? <span className="text-red-500">Blocked</span> : <span className="text-green-500">Active</span>}</TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => updateUser(u.id, { isBlocked: !u.isBlocked })}
-                      className={u.isBlocked ? "text-green-600" : "text-red-600"}
-                    >
-                      {u.isBlocked ? "Unblock" : "Block"}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setEditingUser(u); setIsDialogOpen(true); }}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteUser(u.id)}>
-                      <Trash2 className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                  </div>
+                  <Badge variant="outline">{u.role}</Badge>
+                </TableCell>
+                <TableCell>{u.points}</TableCell>
+                <TableCell>
+                  {u.isBlocked
+                    ? <span className="text-red-500">Blocked</span>
+                    : <span className="text-green-600">Active</span>}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      updateUser(u.id, { isBlocked: !u.isBlocked })
+                    }
+                  >
+                    {u.isBlocked ? "Unblock" : "Block"}
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
+
+            {filteredUsers.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  No users found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
-  )
+  );
 }
+
 
 function VouchersTab() { // Không cần nhận props nữa
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
@@ -935,11 +887,16 @@ function VouchersTab() { // Không cần nhận props nữa
     </Card>
   );
 }
-function FeedbacksTab({ products, deleteFeedback }: any) {
+function FeedbacksTab({ products }: any) {
   // Flatten feedbacks from all products
-  const allFeedbacks = products.flatMap((p: any) =>
-    p.feedbacks.map((f: any) => ({ ...f, productName: p.name, productId: p.id }))
-  );
+const allFeedbacks = products.flatMap((p: any) =>
+  (p.feedbacks || []).map((f: any) => ({
+    ...f,
+    productName: p.name,
+    productId: p.id,
+  }))
+);
+
 
   return (
     <Card>
@@ -955,7 +912,6 @@ function FeedbacksTab({ products, deleteFeedback }: any) {
               <TableHead>Rating</TableHead>
               <TableHead>Comment</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -972,11 +928,6 @@ function FeedbacksTab({ products, deleteFeedback }: any) {
                 </TableCell>
                 <TableCell className="max-w-[200px] truncate">{f.comment}</TableCell>
                 <TableCell>{f.date}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm" onClick={() => deleteFeedback(f.productId, f.id)}>
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
             {allFeedbacks.length === 0 && (

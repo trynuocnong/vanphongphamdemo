@@ -13,7 +13,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Textarea } from "@/components/ui/textarea";
 
 export default function Profile() {
-  const { user, updateUser, orders, offers, vouchers, redeemVoucher, addFeedback } = useStore();
+const {
+  user,
+  authReady,
+  updateUser,
+  orders,
+  offers,
+  vouchers,
+  redeemVoucher,
+  addFeedback,
+} = useStore();
+if (!authReady) {
+  return (
+    <div className="container px-4 py-10 text-muted-foreground">
+      Loading profile...
+    </div>
+  );
+}
+
+if (!user) return <Redirect to="/login" />;
+
   const { toast } = useToast();
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -37,16 +56,18 @@ export default function Profile() {
     });
   };
 
-  const handleChangePassword = () => {
-    if (password === user.password) {
-      updateUser(user.id, { password: newPassword });
-      setPassword("");
-      setNewPassword("");
-      toast({ title: "Password changed successfully" });
-    } else {
-      toast({ title: "Incorrect current password", variant: "destructive" });
-    }
-  };
+const handleChangePassword = () => {
+  if (!newPassword) {
+    toast({ title: "New password is required", variant: "destructive" });
+    return;
+  }
+
+  updateUser(user.id, { password: newPassword });
+  setPassword("");
+  setNewPassword("");
+  toast({ title: "Password changed successfully" });
+};
+
 
   const handleSubmitReview = () => {
     if (reviewProduct) {
