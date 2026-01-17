@@ -6,15 +6,12 @@
   "scripts": {
     "dev:client": "vite dev --port 5000",
     "fake-api": "json-server --watch fake-api/db.json --port 3001",
-<<<<<<< Updated upstream
-    "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-=======
     "dev": "NODE_ENV=development tsx server/index.ts",
->>>>>>> Stashed changes
     "build": "tsx script/build.ts",
     "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "zip": "gulp zipProject"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -57,6 +54,7 @@
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
+    "fake-api": "^0.0.1",
     "framer-motion": "^12.23.24",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.545.0",
@@ -101,6 +99,9 @@
     "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.0",
+    "gulp": "^5.0.1",
+    "gulp-rename": "^2.1.0",
+    "gulp-zip": "^6.1.0",
     "json-server": "^1.0.0-beta.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.14",

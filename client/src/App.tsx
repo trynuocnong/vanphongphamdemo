@@ -1,4 +1,5 @@
 
+
 import { Switch, Route } from "wouter";
 import { StoreProvider } from "@/lib/store";
 import { Layout } from "@/components/layout";
@@ -10,6 +11,16 @@ import ProductDetail from "@/pages/product";
 import Cart from "@/pages/cart";
 import Checkout from "@/pages/checkout";
 import Profile from "@/pages/profile";
+import UserProfile from "@/pages/user-profile";
+import OrderHistory from "@/pages/order-history";
+import Security from "@/pages/security";
+import VoucherCenter from "@/pages/voucher-center";
+import Collections from "@/pages/collections";
+import Bestsellers from "@/pages/bestsellers";
+import NewArrivals from "@/pages/new-arrivals";
+import Contact from "@/pages/contact";
+import About from "@/pages/about";
+import FAQ from "@/pages/faq";
 import Admin from "@/pages/admin";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
@@ -19,10 +30,19 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/collections" component={Collections} />
+        <Route path="/bestsellers" component={Bestsellers} />
+        <Route path="/new-arrivals" component={NewArrivals} />
         <Route path="/product/:id" component={ProductDetail} />
         <Route path="/cart" component={Cart} />
         <Route path="/checkout" component={Checkout} />
-        <Route path="/profile" component={Profile} />
+        <Route path="/profile" component={UserProfile} />
+        <Route path="/orders" component={OrderHistory} />
+        <Route path="/vouchers" component={VoucherCenter} />
+        <Route path="/security" component={Security} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/about" component={About} />
+        <Route path="/faq" component={FAQ} />
         <Route path="/admin" component={Admin} />
         <Route path="/login" component={Login} />
         <Route component={NotFound} />

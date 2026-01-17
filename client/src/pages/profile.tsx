@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Package, Gift, User as UserIcon, Lock, MapPin, Phone, Star } from "lucide-react";
+import { Package, Gift, User as UserIcon, Lock, MapPin, Phone, Star, Heart, ShoppingBag } from "lucide-react";
 import { Redirect, Link } from "wouter";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +13,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Textarea } from "@/components/ui/textarea";
 
 export default function Profile() {
-  const { user, updateUser, orders, offers, vouchers, redeemVoucher, addFeedback } = useStore();
+  const {
+    user,
+    authReady,
+    updateUser,
+    orders,
+    offers,
+    vouchers,
+    products,
+    wishlist,
+    toggleWishlist,
+    redeemVoucher,
+    addFeedback,
+  } = useStore();
+  if (!authReady) {
+    return (
+      <div className="container px-4 py-10 text-muted-foreground">
+        Loading profile...
+      </div>
+    );
+  }
+
+  if (!user) return <Redirect to="/login" />;
+
   const { toast } = useToast();
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -38,15 +60,17 @@ export default function Profile() {
   };
 
   const handleChangePassword = () => {
-    if (password === user.password) {
-      updateUser(user.id, { password: newPassword });
-      setPassword("");
-      setNewPassword("");
-      toast({ title: "Password changed successfully" });
-    } else {
-      toast({ title: "Incorrect current password", variant: "destructive" });
+    if (!newPassword) {
+      toast({ title: "New password is required", variant: "destructive" });
+      return;
     }
+
+    updateUser(user.id, { password: newPassword });
+    setPassword("");
+    setNewPassword("");
+    toast({ title: "Password changed successfully" });
   };
+
 
   const handleSubmitReview = () => {
     if (reviewProduct) {
@@ -77,6 +101,7 @@ export default function Profile() {
         <TabsList>
           <TabsTrigger value="orders">Order History</TabsTrigger>
           <TabsTrigger value="offers">My Offers</TabsTrigger>
+          <TabsTrigger value="favorites">Favorites</TabsTrigger>
           <TabsTrigger value="vouchers">Vouchers</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -93,33 +118,33 @@ export default function Profile() {
                 myOrders.map(order => (
                   <div key={order.id} className="border rounded-lg p-4 space-y-4">
                     <div className="flex justify-between items-center border-b pb-2">
-                       <div>
-                         <span className="font-mono text-sm">#{order.id}</span>
-                         <span className="mx-2 text-muted-foreground">•</span>
-                         <span className="text-sm text-muted-foreground">{new Date(order.date).toLocaleDateString()}</span>
-                       </div>
-                       <Badge variant={order.status === "completed" ? "default" : order.status === "cancelled" ? "destructive" : "secondary"}>
-                         {order.status.toUpperCase()}
-                       </Badge>
+                      <div>
+                        <span className="font-mono text-sm">#{order.id}</span>
+                        <span className="mx-2 text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">{new Date(order.date).toLocaleDateString()}</span>
+                      </div>
+                      <Badge variant={order.status === "completed" ? "default" : order.status === "cancelled" ? "destructive" : "secondary"}>
+                        {order.status.toUpperCase()}
+                      </Badge>
                     </div>
                     <div className="space-y-2">
-                      {order.items.map((item, idx) => (
+                      {order.items.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <div className="flex items-center gap-2">
-                             <span>{item.quantity}x {item.name}</span>
+                            <span>{item.quantity}x {item.name}</span>
                           </div>
                           <div className="flex items-center gap-4">
-                             <span>{(item.price * item.quantity).toLocaleString()}đ</span>
-                             {order.status === "completed" && (
-                               <Button 
-                                 size="sm" 
-                                 variant="outline" 
-                                 className="h-7 text-xs"
-                                 onClick={() => setReviewProduct(item)}
-                               >
-                                 Review
-                               </Button>
-                             )}
+                            <span>{(item.price * item.quantity).toLocaleString()}đ</span>
+                            {order.status === "completed" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs"
+                                onClick={() => setReviewProduct(item)}
+                              >
+                                Review
+                              </Button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -162,9 +187,9 @@ export default function Profile() {
                     </div>
                     <div>
                       <Badge className={
-                        offer.status === "accepted" ? "bg-green-600" : 
-                        offer.status === "rejected" ? "bg-red-600" : 
-                        offer.status === "countered" ? "bg-orange-500" : "bg-gray-500"
+                        offer.status === "accepted" ? "bg-green-600" :
+                          offer.status === "rejected" ? "bg-red-600" :
+                            offer.status === "countered" ? "bg-orange-500" : "bg-gray-500"
                       }>
                         {offer.status.toUpperCase()}
                       </Badge>
@@ -176,59 +201,123 @@ export default function Profile() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="favorites">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Favorites</CardTitle>
+              <CardDescription>Products you've added to your wishlist</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {wishlist.length === 0 ? (
+                <div className="text-center py-12">
+                  <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-4">Your wishlist is empty</p>
+                  <Link href="/">
+                    <Button variant="outline">
+                      <ShoppingBag className="w-4 h-4 mr-2" />
+                      Browse Products
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {wishlist.map((productId) => {
+                    const product = products.find(p => p.id === productId);
+                    if (!product) return null;
+
+                    return (
+                      <div key={product.id} className="border rounded-lg overflow-hidden group relative">
+                        <div className="aspect-square overflow-hidden bg-muted">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                        <div className="p-4 space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="text-xs text-muted-foreground">{product.categoryName}</p>
+                              <h3 className="font-medium line-clamp-1">{product.name}</h3>
+                            </div>
+                            <button
+                              onClick={() => toggleWishlist(product.id)}
+                              className="text-red-500 hover:text-red-600 p-1"
+                            >
+                              <Heart className="w-5 h-5 fill-current" />
+                            </button>
+                          </div>
+                          <p className="text-lg font-bold">{product.price.toLocaleString()}đ</p>
+                          <div className="flex gap-2">
+                            <Link href={`/product/${product.id}`} className="flex-1">
+                              <Button variant="outline" size="sm" className="w-full">
+                                View Details
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="vouchers">
           <div className="space-y-6">
-             <Card>
-               <CardHeader><CardTitle>My Vouchers Wallet</CardTitle></CardHeader>
-               <CardContent className="space-y-4">
-                 {myVoucherIds.length === 0 ? <p className="text-muted-foreground">No vouchers.</p> : (
-                   myVoucherIds.map(vid => {
-                     const v = vouchers.find(vo => vo.id === vid);
-                     if(!v) return null;
-                     return (
-                       <div key={vid} className="border p-4 rounded-lg bg-muted/20 space-y-2">
-                         <div className="flex justify-between items-center">
-                           <div className="flex items-center gap-2">
-                             <TicketIcon className="w-5 h-5 text-primary" />
-                             <span className="font-bold text-lg">{v.code}</span>
-                           </div>
-                           <Badge variant="outline">-{v.discount.toLocaleString()}đ</Badge>
-                         </div>
-                         <p className="text-sm text-muted-foreground">{v.description}</p>
-                         <div className="text-xs bg-background p-2 rounded border">
-                            <strong>Conditions:</strong> {v.detailedConditions}
-                         </div>
-                       </div>
-                     )
-                   })
-                 )}
-               </CardContent>
-             </Card>
-
-             <Card>
-               <CardHeader>
-                 <CardTitle>Rewards Center</CardTitle>
-                 <CardDescription>Redeem your points for vouchers</CardDescription>
-               </CardHeader>
-               <CardContent className="space-y-4">
-                 {vouchers.filter(v => v.pointCost > 0).map(v => (
-                   <div key={v.id} className="flex justify-between items-center border p-4 rounded-lg">
-                      <div className="space-y-1">
-                        <p className="font-bold">{v.description}</p>
-                        <p className="text-sm text-primary font-medium">{v.pointCost} Points</p>
-                        <p className="text-xs text-muted-foreground max-w-md">{v.detailedConditions}</p>
+            <Card>
+              <CardHeader><CardTitle>My Vouchers Wallet</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {myVoucherIds.length === 0 ? <p className="text-muted-foreground">No vouchers.</p> : (
+                  myVoucherIds.map((vid: string) => {
+                    const v = vouchers.find(vo => vo.id === vid);
+                    if (!v) return null;
+                    return (
+                      <div key={vid} className="border p-4 rounded-lg bg-muted/20 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <TicketIcon className="w-5 h-5 text-primary" />
+                            <span className="font-bold text-lg">{v.code}</span>
+                          </div>
+                          <Badge variant="outline">-{v.discount.toLocaleString()}đ</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{v.description}</p>
+                        <div className="text-xs bg-background p-2 rounded border">
+                          <strong>Conditions:</strong> {v.detailedConditions}
+                        </div>
                       </div>
-                      <Button 
-                        size="sm" 
-                        disabled={user.points < v.pointCost || user.vouchers.includes(v.id)}
-                        onClick={() => redeemVoucher(v.id)}
-                      >
-                        {user.vouchers.includes(v.id) ? "Owned" : "Redeem"}
-                      </Button>
-                   </div>
-                 ))}
-               </CardContent>
-             </Card>
+                    )
+                  })
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Rewards Center</CardTitle>
+                <CardDescription>Redeem your points for vouchers</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {vouchers.filter(v => v.pointCost > 0).map(v => (
+                  <div key={v.id} className="flex justify-between items-center border p-4 rounded-lg">
+                    <div className="space-y-1">
+                      <p className="font-bold">{v.description}</p>
+                      <p className="text-sm text-primary font-medium">{v.pointCost} Points</p>
+                      <p className="text-xs text-muted-foreground max-w-md">{v.detailedConditions}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      disabled={user.points < v.pointCost || user.vouchers.includes(v.id)}
+                      onClick={() => redeemVoucher(v.id)}
+                    >
+                      {user.vouchers.includes(v.id) ? "Owned" : "Redeem"}
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
@@ -276,18 +365,18 @@ export default function Profile() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                   <label className="text-sm font-medium">Current Password</label>
-                   <div className="relative">
-                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                     <Input type="password" value={password} onChange={e => setPassword(e.target.value)} className="pl-9" />
-                   </div>
+                  <label className="text-sm font-medium">Current Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input type="password" value={password} onChange={e => setPassword(e.target.value)} className="pl-9" />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                   <label className="text-sm font-medium">New Password</label>
-                   <div className="relative">
-                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                     <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="pl-9" />
-                   </div>
+                  <label className="text-sm font-medium">New Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="pl-9" />
+                  </div>
                 </div>
                 <Button onClick={handleChangePassword} variant="outline">Update Password</Button>
               </CardContent>
@@ -307,24 +396,24 @@ export default function Profile() {
               Reviewing: <strong>{reviewProduct?.name}</strong>
             </p>
             <div className="space-y-2">
-               <label className="text-sm font-medium">Rating</label>
-               <div className="flex gap-2">
-                 {[1, 2, 3, 4, 5].map((star) => (
-                   <Star 
-                     key={star} 
-                     className={`w-6 h-6 cursor-pointer ${star <= rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}`}
-                     onClick={() => setRating(star)}
-                   />
-                 ))}
-               </div>
+              <label className="text-sm font-medium">Rating</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-6 h-6 cursor-pointer ${star <= rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}`}
+                    onClick={() => setRating(star)}
+                  />
+                ))}
+              </div>
             </div>
             <div className="space-y-2">
-               <label className="text-sm font-medium">Comment</label>
-               <Textarea 
-                 placeholder="Tell us what you liked..." 
-                 value={comment}
-                 onChange={(e) => setComment(e.target.value)}
-               />
+              <label className="text-sm font-medium">Comment</label>
+              <Textarea
+                placeholder="Tell us what you liked..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter>

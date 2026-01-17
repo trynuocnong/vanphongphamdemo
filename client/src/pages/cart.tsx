@@ -138,7 +138,7 @@ export default function Cart() {
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">Your Vouchers:</p>
                   <div className="flex flex-wrap gap-2">
-                    {user.vouchers.map(vid => {
+                    {user.vouchers.map((vid: string) => {
                       const v = vouchers.find(v => v.id === vid);
                       if (!v) return null;
                       return (

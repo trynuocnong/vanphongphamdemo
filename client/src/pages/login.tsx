@@ -41,13 +41,15 @@ export default function Login() {
       // Use store's login function to update state
       const success = login(user.email, user.role);
 
-      if (success) {
-        toast.success(`Welcome back, ${user.name}!`);
-        // Small delay to ensure state is updated before navigation
-        setTimeout(() => {
-          setLocation(user.role === "admin" ? "/admin" : "/");
-        }, 100);
-      }
+if (success) {
+  localStorage.setItem("userRole", user.role);
+  toast.success(`Welcome back, ${user.name}!`);
+
+  setTimeout(() => {
+    setLocation(user.role === "admin" ? "/admin" : "/");
+  }, 0);
+}
+
     } catch {
       toast.error("Server error, please try again");
     }
