@@ -27,7 +27,15 @@ export interface Category {
     name: string;
     description: string;
 }
-
+// review types
+export interface Review {
+  id: string;
+  userId: string;
+  userName: string;
+  rating: number; // 1 → 5
+  comment: string;
+  createdAt: number;
+}
 // Product types
 export interface ProductFeedback {
     id?: string;
@@ -59,6 +67,7 @@ export interface Product {
     feedbacks?: ProductFeedback[];
     createdAt?: number ;
     isDeleted?: boolean;
+    reviews?: Review[];
 }
 
 // Voucher types

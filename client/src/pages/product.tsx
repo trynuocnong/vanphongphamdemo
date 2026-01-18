@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { getProducts } from "@/services/productService";
 import { getOffers, createOffer } from "@/services/offerService";
 import { useStore } from "@/lib/store";
-
+import { Review } from "@/types"; 
 export default function ProductDetail() {
   const { id } = useParams();
   const { user, addToCart: addToCartStore } = useStore();
@@ -396,35 +396,49 @@ export default function ProductDetail() {
 
       {/* === SECTION 3: REVIEWS === */}
       <div className="mt-20 max-w-3xl">
-        <h2 className="text-2xl font-serif font-bold mb-6">Customer Reviews</h2>
-        <div className="space-y-6">
-          {product.feedbacks && product.feedbacks.length > 0 ? (
-            product.feedbacks.map((fb: any) => (
-              <div key={fb.id || Math.random()} className="border-b pb-6">
-                {/* Fallback data nếu API không trả về user/date */}
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold">{fb.user || "Anonymous"}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {fb.date || "Recent"}
-                  </span>
-                </div>
-                <div className="flex text-yellow-500 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${i < fb.rating ? "fill-current" : "text-muted"
-                        }`}
-                    />
-                  ))}
-                </div>
-                <p className="text-muted-foreground">{fb.comment}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-muted-foreground italic">No reviews yet.</p>
-          )}
+  <h2 className="text-2xl font-serif font-bold mb-6">
+    Customer Reviews
+  </h2>
+
+  <div className="space-y-6">
+    {product.reviews && product.reviews.length > 0 ? (
+      product.reviews.map((review: Review) => (
+        <div key={review.id} className="border-b pb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-semibold">
+              {review.userName}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {new Date(review.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+
+          <div className="flex text-yellow-500 mb-2">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-4 h-4 ${
+                  i < review.rating
+                    ? "fill-current"
+                    : "text-muted"
+                }`}
+              />
+            ))}
+          </div>
+
+          <p className="text-muted-foreground">
+            {review.comment}
+          </p>
         </div>
-      </div>
+      ))
+    ) : (
+      <p className="text-muted-foreground italic">
+        No reviews yet.
+      </p>
+    )}
+  </div>
+</div>
+
 
       {/* === SECTION 4: RELATED PRODUCTS === */}
       {relatedProducts.length > 0 && (
