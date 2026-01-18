@@ -1,14 +1,12 @@
-
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import heroImg from "@assets/generated_images/minimalist_stationery_workspace_hero.png";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
+import heroImg from "@assets/generated_images/minimalist_stationery_workspace_hero.png";
 import ProductCard from "@/components/product-card";
 import ProductQuickView from "@/components/product-quick-view";
-import { Product } from "@/types";
-import { useState } from "react";
+import {Product} from "@/types";
+import { useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
 
 export default function Home() {
@@ -16,42 +14,41 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  // ✅ Không hiển thị sản phẩm bị xóa
-const normalizedProducts = products.map(p => ({
-  ...p,
-  isDeleted: p.isDeleted ?? false,
-}));
+  const activeProducts = useMemo(() => products.filter((p) => !p.isDeleted), [products]);
 
-const activeProducts = normalizedProducts.filter(p => !p.isDeleted);
+  // 🔍 Search filter
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm.trim()) return activeProducts;
+    return activeProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, activeProducts]);
 
-  // 🔍 Search
-  const filteredProducts = activeProducts.filter(p =>
-  p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  p.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
-);
+  // 🔥 Bán chạy nhất
+  const bestsellers = useMemo(() => {
+    return [...activeProducts]
+      .filter((p) => p.sold ?? 0)
+      .sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0))
+      .slice(0, 4);
+  }, [activeProducts]);
 
+  // 🆕 Sản phẩm mới (isNew === true)
+  const newArrivals = useMemo(() => {
+    return activeProducts.filter((p) => p.isNew).slice(0, 4);
+  }, [activeProducts]);
 
-  // 🔥 Bán chạy
-  const bestsellers = [...filteredProducts]
-    .sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0))
-    .slice(0, 4);
-
-  // 🆕 Sản phẩm mới
-  const newArrivals = [...filteredProducts]
-    .filter(p => p.isNew)
-    .sort(
-  (a, b) =>
-    new Date(b.createdAt!).getTime() -
-    new Date(a.createdAt!).getTime()
-)
-
-    
-    .slice(0, 4);
-
-  // 💸 Sale
-  const onSale = filteredProducts
-    .filter(p => p.isSale || p.originalPrice)
-    .slice(0, 4);
+  // 💸 Giảm giá (isSale === true)
+  const onSale = useMemo(() => {
+    return activeProducts
+      .filter(
+        (p) =>
+          p.isSale === true ||
+          (p.originalPrice && p.originalPrice > p.price)
+      )
+      .slice(0, 4);
+  }, [activeProducts]);
 
   return (
     <div className="space-y-16 pb-16">
@@ -62,7 +59,6 @@ const activeProducts = normalizedProducts.filter(p => !p.isDeleted);
           style={{ backgroundImage: `url(${heroImg})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
-
         <div className="relative z-10 max-w-3xl px-4 space-y-8">
           <h1 className="text-6xl md:text-7xl font-serif font-bold leading-tight">
             <span className="bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -89,7 +85,7 @@ const activeProducts = normalizedProducts.filter(p => !p.isDeleted);
         </div>
       </section>
 
-      {/* Global Search */}
+      {/* Search */}
       <section className="container px-4">
         <div className="max-w-2xl mx-auto relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -125,10 +121,12 @@ const activeProducts = normalizedProducts.filter(p => !p.isDeleted);
             { name: "Paper", emoji: "📄", gradient: "from-green-500 to-teal-500", category: "c4" },
           ].map((cat, idx) => (
             <Link key={idx} href={`/collections?category=${cat.category}`}>
-              <div className="group relative h-48 rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-br ${cat.gradient} p-6 flex flex-col justify-between hover:shadow-2xl transition-all duration-300">
-                <div style={{ background: `linear-gradient(to right, rgb(19, 78, 94), rgb(113, 178, 128))` }} className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+              <div
+                className={`group relative h-48 rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-br ${cat.gradient} p-6 flex flex-col justify-between hover:shadow-2xl transition-all duration-300`}
+              >
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
                 <div className="relative z-10">
-                  <div className="text-5xl mb-2 transform transition-transform">{cat.emoji}</div>
+                  <div className="text-5xl mb-2">{cat.emoji}</div>
                   <h3 className="text-2xl font-serif font-bold text-white">{cat.name}</h3>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-white/50 via-white/80 to-white/50 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
@@ -144,25 +142,29 @@ const activeProducts = normalizedProducts.filter(p => !p.isDeleted);
           title="Search Results"
           products={filteredProducts}
           onQuickView={setQuickViewProduct}
-          showEmptyState={true}
+          showEmptyState
         />
       ) : (
         <>
-          <ProductSection
-            title="Bestsellers"
-            products={bestsellers}
-            onQuickView={setQuickViewProduct}
-            showRanking
-          />
-          <ProductSection
-            title="New Arrivals"
-            products={newArrivals}
-            onQuickView={setQuickViewProduct}
-            showNewBadge
-          />
+          {bestsellers.length > 0 && (
+            <ProductSection
+              title="🔥 Bestsellers"
+              products={bestsellers}
+              onQuickView={setQuickViewProduct}
+              showRanking
+            />
+          )}
+          {newArrivals.length > 0 && (
+            <ProductSection
+              title="🆕 New Arrivals"
+              products={newArrivals}
+              onQuickView={setQuickViewProduct}
+              showNewBadge
+            />
+          )}
           {onSale.length > 0 && (
             <ProductSection
-              title="On Sale"
+              title="💸 On Sale"
               products={onSale}
               onQuickView={setQuickViewProduct}
             />
@@ -170,7 +172,7 @@ const activeProducts = normalizedProducts.filter(p => !p.isDeleted);
         </>
       )}
 
-      {/* Quick View Modal */}
+      {/* Quick View */}
       <ProductQuickView
         product={quickViewProduct}
         isOpen={!!quickViewProduct}
@@ -186,7 +188,7 @@ function ProductSection({
   onQuickView,
   showEmptyState = false,
   showRanking = false,
-  showNewBadge = false
+  showNewBadge = false,
 }: {
   title: string;
   products: Product[];
@@ -195,7 +197,6 @@ function ProductSection({
   showRanking?: boolean;
   showNewBadge?: boolean;
 }) {
-
   if (products.length === 0 && !showEmptyState) return null;
 
   return (

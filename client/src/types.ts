@@ -25,7 +25,6 @@ export interface User {
 export interface Category {
     id: string;
     name: string;
-    description: string;
 }
 // review types
 export interface Review {

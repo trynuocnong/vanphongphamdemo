@@ -379,6 +379,7 @@ export default function Profile() {
                   </div>
                 </div>
                 <Button onClick={handleChangePassword} variant="outline">Update Password</Button>
+                
               </CardContent>
             </Card>
           </div>

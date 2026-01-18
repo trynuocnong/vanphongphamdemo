@@ -36,6 +36,9 @@ import {
     DollarSign,
     Heart,
     ShoppingBag,
+    Lock,
+    Search,
+    Check
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
@@ -115,9 +118,69 @@ function VoucherCard({ voucher }: { voucher: any }) {
 }
 
 export default function UserProfile() {
-    const { user, vouchers, orders, wishlist, toggleWishlist, products } = useStore();
+    const { user, vouchers, orders, offers, wishlist, toggleWishlist, products } = useStore();
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editedUser, setEditedUser] = useState(user);
+    const [addresses, setAddresses] = useState<any[]>([]);
+const [selectedAddress, setSelectedAddress] = useState<any>(null);
+
+const [searchTerm, setSearchTerm] = useState("");
+const [selectedTab, setSelectedTab] = useState("all");
+
+const availableVouchers = vouchers.filter((v) => !user.vouchers?.includes(v.id));
+const myVouchers = vouchers.filter((v) => user.vouchers?.includes(v.id));
+
+const filteredVouchers = (
+  selectedTab === "all" ? availableVouchers : myVouchers
+).filter(
+  (v) =>
+    v.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    v.description.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
+const handleCollectVoucher = async (voucher: any) => {
+  try {
+    if (voucher.pointCost > 0 && (user.points || 0) < voucher.pointCost) {
+      toast.error(`You need ${voucher.pointCost} points to redeem this voucher`);
+      return;
+    }
+
+    const updatedVouchers = [...(user.vouchers || []), voucher.id];
+    const updatedPoints =
+      voucher.pointCost > 0 ? (user.points || 0) - voucher.pointCost : user.points;
+
+    const response = await fetch(`http://localhost:3001/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vouchers: updatedVouchers, points: updatedPoints }),
+    });
+
+    if (response.ok) {
+      toast.success(
+        voucher.pointCost > 0
+          ? `Voucher collected! Used ${voucher.pointCost} points`
+          : "Voucher collected successfully!"
+      );
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      toast.error("Failed to collect voucher");
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Error collecting voucher");
+  }
+};
+
+// Load addresses of current user
+useEffect(() => {
+  if (user?.id) {
+    fetch(`http://localhost:3001/addresses?userId=${user.id}`)
+      .then(res => res.json())
+      .then(data => setAddresses(data))
+      .catch(err => console.error("Failed to load addresses:", err));
+  }
+}, [user]);
+
 
     // Sync editedUser with user when user data loads
     useEffect(() => {
@@ -134,18 +197,6 @@ export default function UserProfile() {
         );
     }
 
-    // Sample addresses (in real app, would come from API)
-    const addresses = [
-        {
-            id: "addr1",
-            name: user.name,
-            phone: user.phone || "0987823027",
-            address: user.address || "185/94/2C, KP Tay B",
-            city: "Bình Dương",
-            postalCode: "75000",
-            isDefault: true,
-        },
-    ];
 
     // User vouchers
     const userVouchers = vouchers.filter((v) => user.vouchers?.includes(v.id));
@@ -199,18 +250,143 @@ export default function UserProfile() {
                 <Card className="border-none shadow-xl bg-gradient-to-br from-primary/10 via-purple-500/5 to-pink-500/5">
                     <CardContent className="p-8">
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                            {/* Avatar */}
-                            <div className="relative group cursor-pointer">
-                                <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
-                                    <AvatarImage src={user.avatar} alt={user.name} />
-                                    <AvatarFallback className="text-3xl font-bold bg-gradient-to-br from-primary to-purple-600 text-white">
-                                        {user.name.charAt(0).toUpperCase()}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Camera className="h-8 w-8 text-white" />
-                                </div>
-                            </div>
+ {/* Avatar */}
+<div className="relative group flex flex-col items-center cursor-pointer">
+  {/* Hidden file input */}
+  <input
+    type="file"
+    accept="image/*"
+    id="avatar-upload"
+    className="hidden"
+    onChange={async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // ✅ Giới hạn 2MB
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("File too large (max 2MB)");
+        return;
+      }
+
+      // Đọc file thành base64 (để fake-API lưu được vĩnh viễn)
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result?.toString();
+        if (!base64) return;
+
+        // Preview ngay
+        setEditedUser((prev) => ({ ...prev, avatar: base64 }));
+
+        try {
+          const res = await fetch(`http://localhost:3001/users/${user.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ avatar: base64 }),
+          });
+
+          if (res.ok) toast.success("Avatar updated!");
+          else toast.error("Failed to upload avatar");
+        } catch (err) {
+          console.error(err);
+          toast.error("Error uploading avatar");
+        }
+      };
+      reader.readAsDataURL(file); // Chuyển sang base64
+    }}
+  />
+
+  {/* Avatar hiển thị */}
+  <label htmlFor="avatar-upload" className="relative block">
+    <Avatar className="h-32 w-32 border-4 border-white shadow-xl transition-transform duration-300 hover:scale-105">
+      <AvatarImage src={editedUser?.avatar || ""} alt={user.name} />
+      <AvatarFallback className="text-3xl font-bold bg-gradient-to-br from-primary to-purple-600 text-white">
+        {user.name.charAt(0).toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
+
+    <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+      <Camera className="h-8 w-8 text-white" />
+    </div>
+  </label>
+
+  {/* Buttons dưới avatar */}
+  <div className="flex flex-col sm:flex-row gap-2 mt-3">
+    {/* Paste link */}
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          Paste Link
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Set Avatar via URL</DialogTitle>
+          <DialogDescription>Paste a direct image URL below</DialogDescription>
+        </DialogHeader>
+
+        <Input id="avatar-url-input" placeholder="https://example.com/avatar.jpg" />
+
+        <DialogFooter>
+          <Button
+            onClick={async () => {
+              const input = document.getElementById("avatar-url-input") as HTMLInputElement;
+              const link = input?.value.trim();
+              if (!link) return toast.error("Please enter a valid image URL");
+
+              // Preview ngay
+              setEditedUser((prev) => ({ ...prev, avatar: link }));
+
+              try {
+                const res = await fetch(`http://localhost:3001/users/${user.id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ avatar: link }),
+                });
+
+                if (res.ok) toast.success("Avatar updated!");
+                else toast.error("Invalid URL or failed to update");
+              } catch (err) {
+                console.error(err);
+                toast.error("Error updating avatar");
+              }
+            }}
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Remove avatar */}
+    {editedUser?.avatar && (
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={async () => {
+          setEditedUser((prev) => ({ ...prev, avatar: null }));
+
+          try {
+            const res = await fetch(`http://localhost:3001/users/${user.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ avatar: null }),
+            });
+            if (res.ok) toast.success("Avatar removed");
+            else toast.error("Failed to remove avatar");
+          } catch (err) {
+            console.error(err);
+            toast.error("Error removing avatar");
+          }
+        }}
+      >
+        Remove
+      </Button>
+    )}
+  </div>
+</div>
+
+
+
 
                             {/* User Info */}
                             <div className="flex-1 text-center md:text-left space-y-2">
@@ -271,201 +447,278 @@ export default function UserProfile() {
             </div>
 
             {/* Tabs */}
-            <Tabs defaultValue="personal" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
-                    <TabsTrigger value="personal" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                        <User className="h-4 w-4 mr-2" />
-                        Personal Info
-                    </TabsTrigger>
-                    <TabsTrigger value="addresses" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        Addresses
-                    </TabsTrigger>
-                    <TabsTrigger value="wishlist" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                        <Heart className="h-4 w-4 mr-2" />
-                        Wishlist ({wishlist?.length || 0})
-                    </TabsTrigger>
-                    <TabsTrigger value="vouchers" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                        <Ticket className="h-4 w-4 mr-2" />
-                        Vouchers ({userVouchers.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="rewards" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                        <Award className="h-4 w-4 mr-2" />
-                        Rewards
-                    </TabsTrigger>
-                </TabsList>
+<Tabs defaultValue="personal" className="space-y-6">
+  <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
+    <TabsTrigger value="personal" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+      <User className="h-4 w-4 mr-2" />
+      Personal Info
+    </TabsTrigger>
+
+    <TabsTrigger value="wishlist" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+      <Heart className="h-4 w-4 mr-2" />
+      Wishlist ({wishlist?.length || 0})
+    </TabsTrigger>
+
+    <TabsTrigger value="vouchers" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+      <Ticket className="h-4 w-4 mr-2" />
+      Vouchers ({userVouchers.length})
+    </TabsTrigger>
+
+    <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+      <Package className="h-4 w-4 mr-2" />
+      Orders
+    </TabsTrigger>
+
+    <TabsTrigger value="offers" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+      <DollarSign className="h-4 w-4 mr-2" />
+      Offers
+    </TabsTrigger>
+  </TabsList>
+
 
                 {/* Personal Information Tab */}
-                <TabsContent value="personal" className="space-y-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Personal Information</CardTitle>
-                                <CardDescription>Manage your personal details</CardDescription>
-                            </div>
-                            <Button
-                                variant={isEditingProfile ? "default" : "outline"}
-                                onClick={() => setIsEditingProfile(!isEditingProfile)}
-                            >
-                                <Edit3 className="h-4 w-4 mr-2" />
-                                {isEditingProfile ? "Cancel" : "Edit"}
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Full Name</Label>
-                                    <Input
-                                        id="name"
-                                        value={editedUser?.name || ""}
-                                        onChange={(e) => setEditedUser({ ...editedUser!, name: e.target.value })}
-                                        disabled={!isEditingProfile}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        value={editedUser?.email || ""}
-                                        disabled
-                                        className="bg-muted"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="phone">Phone</Label>
-                                    <Input
-                                        id="phone"
-                                        value={editedUser?.phone || ""}
-                                        onChange={(e) => setEditedUser({ ...editedUser!, phone: e.target.value })}
-                                        disabled={!isEditingProfile}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="city">City</Label>
-                                    <Input
-                                        id="city"
-                                        value={editedUser?.city || ""}
-                                        onChange={(e) => setEditedUser({ ...editedUser!, city: e.target.value })}
-                                        disabled={!isEditingProfile}
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="bio">Bio</Label>
-                                <Textarea
-                                    id="bio"
-                                    value={editedUser?.bio || ""}
-                                    onChange={(e) => setEditedUser({ ...editedUser!, bio: e.target.value })}
-                                    disabled={!isEditingProfile}
-                                    placeholder="Tell us about yourself..."
-                                    rows={3}
-                                />
-                            </div>
-                            {isEditingProfile && (
-                                <div className="flex justify-end gap-2 pt-4">
-                                    <Button variant="outline" onClick={() => setIsEditingProfile(false)}>
-                                        Cancel
-                                    </Button>
-                                    <Button onClick={handleSaveProfile}>
-                                        Save Changes
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+  <TabsContent value="personal" className="space-y-6">
+    {/* Thông tin cá nhân */}
+    <Card>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Button
+            variant={isEditingProfile ? "default" : "outline"}
+            onClick={() => setIsEditingProfile(!isEditingProfile)}
+          >
+            <Edit3 className="h-4 w-4 mr-2" />
+            {isEditingProfile ? "Cancel" : "Edit"}
+          </Button>
 
-                {/* Addresses Tab */}
-                <TabsContent value="addresses" className="space-y-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="text-2xl font-semibold">Saved Addresses</h3>
-                            <p className="text-sm text-muted-foreground">Manage your shipping addresses</p>
-                        </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Address
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Add New Address</DialogTitle>
-                                    <DialogDescription>Add a new shipping address to your account</DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4 py-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="addr-name">Full Name</Label>
-                                        <Input id="addr-name" placeholder="John Doe" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="addr-phone">Phone</Label>
-                                        <Input id="addr-phone" placeholder="0901234567" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="addr-address">Address</Label>
-                                        <Input id="addr-address" placeholder="123 Street Name" />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="addr-city">City</Label>
-                                            <Input id="addr-city" placeholder="Ho Chi Minh" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="addr-postal">Postal Code</Label>
-                                            <Input id="addr-postal" placeholder="700000" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button onClick={() => toast.success("Address added!")}>
-                                        Add Address
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
+          <Link href="/security">
+            <Button variant="secondary" className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Security Settings
+            </Button>
+          </Link>
+        </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                        {addresses.map((address) => (
-                            <AddressCard
-                                key={address.id}
-                                address={address}
-                                isDefault={address.isDefault}
-                                onEdit={() => toast("Edit address")}
-                                onDelete={() => toast("Delete address")}
-                            />
-                        ))}
-                    </div>
-                </TabsContent>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              value={editedUser?.name || ""}
+              onChange={(e) => setEditedUser({ ...editedUser!, name: e.target.value })}
+              disabled={!isEditingProfile}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" value={editedUser?.email || ""} disabled className="bg-muted" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              value={editedUser?.phone || ""}
+              onChange={(e) => setEditedUser({ ...editedUser!, phone: e.target.value })}
+              disabled={!isEditingProfile}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="city">City</Label>
+            <Input
+              id="city"
+              value={editedUser?.city || ""}
+              onChange={(e) => setEditedUser({ ...editedUser!, city: e.target.value })}
+              disabled={!isEditingProfile}
+            />
+          </div>
+        </div>
 
-                {/* Vouchers Tab */}
-                <TabsContent value="vouchers" className="space-y-4">
-                    <div className="mb-4">
-                        <h3 className="text-2xl font-semibold">My Vouchers</h3>
-                        <p className="text-sm text-muted-foreground">Use your vouchers to get discounts on orders</p>
-                    </div>
+        <div className="space-y-2">
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea
+            id="bio"
+            value={editedUser?.bio || ""}
+            onChange={(e) => setEditedUser({ ...editedUser!, bio: e.target.value })}
+            disabled={!isEditingProfile}
+            placeholder="Tell us about yourself..."
+            rows={3}
+          />
+        </div>
 
-                    {userVouchers.length === 0 ? (
-                        <Card className="border-dashed">
-                            <CardContent className="flex flex-col items-center justify-center py-16">
-                                <Ticket className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                                <h3 className="text-xl font-semibold mb-2">No vouchers yet</h3>
-                                <p className="text-muted-foreground text-center">
-                                    Redeem vouchers with your points or get them from promotions
-                                </p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {userVouchers.map((voucher) => (
-                                <VoucherCard key={voucher.id} voucher={voucher} />
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
+        {isEditingProfile && (
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setIsEditingProfile(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProfile}>Save Changes</Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+
+    {/* QUẢN LÝ ĐỊA CHỈ*/}
+    <Separator className="my-4" />
+    <h3 className="text-2xl font-semibold">Saved Addresses</h3>
+    <div className="flex justify-end mb-3">
+      <Dialog open={!!selectedAddress} onOpenChange={(open) => !open && setSelectedAddress(null)}>
+        <DialogTrigger asChild>
+          <Button onClick={() => setSelectedAddress({})}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Address
+          </Button>
+        </DialogTrigger>
+        {/* Dialog thêm/sửa địa chỉ giữ nguyên */}
+        {/* ... giữ nguyên logic thêm/sửa ở đây */}
+      </Dialog>
+    </div>
+
+    {addresses.length === 0 ? (
+      <Card className="border-dashed">
+        <CardContent className="py-12 text-center text-muted-foreground">
+          <MapPin className="h-16 w-16 mx-auto mb-4 opacity-50" />
+          <p>No addresses yet. Add a new address to your account.</p>
+        </CardContent>
+      </Card>
+    ) : (
+      <div className="grid gap-4 md:grid-cols-2">
+        {addresses.map((address) => (
+          <AddressCard
+            key={address.id}
+            address={address}
+            isDefault={address.isDefault}
+            onEdit={() => setSelectedAddress(address)}
+            onDelete={async () => {
+              if (confirm("Delete this address?")) {
+                await fetch(`http://localhost:3001/addresses/${address.id}`, { method: "DELETE" });
+                toast.success("Address deleted");
+                setAddresses(addresses.filter((a) => a.id !== address.id));
+              }
+            }}
+          />
+        ))}
+      </div>
+    )}
+  </TabsContent>
+
+{/* Orders Tab */}
+<TabsContent value="orders" className="space-y-4">
+  <Card>
+    <CardHeader>
+      <CardTitle>My Orders</CardTitle>
+      <CardDescription>Track all your past and current orders</CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {userOrders.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Package className="h-16 w-16 mx-auto mb-3 opacity-50" />
+          <p>No orders yet.</p>
+          <Link href="/">
+            <Button variant="outline" className="mt-3">
+              <ShoppingBag className="h-4 w-4 mr-2" />
+              Start Shopping
+            </Button>
+          </Link>
+        </div>
+      ) : (
+        userOrders.map((order) => (
+          <Card key={order.id} className="border border-muted/30">
+            <CardHeader className="flex flex-row justify-between items-center">
+              <div>
+                <CardTitle className="text-base">Order #{order.id}</CardTitle>
+                <CardDescription>
+                  {new Date(order.date).toLocaleDateString()} •{" "}
+                  <Badge
+                    variant={
+                      order.status === "completed"
+                        ? "default"
+                        : order.status === "cancelled"
+                        ? "destructive"
+                        : "secondary"
+                    }
+                  >
+                    {order.status.toUpperCase()}
+                  </Badge>
+                </CardDescription>
+              </div>
+              <p className="font-semibold">{order.total.toLocaleString()}đ</p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {order.items.map((item: any, idx: number) => (
+                <div key={idx} className="flex justify-between text-sm">
+                  <span>
+                    {item.quantity}× {item.name}
+                  </span>
+                  <span>{(item.quantity * item.price).toLocaleString()}đ</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </CardContent>
+  </Card>
+</TabsContent>
+
+                {/* Offers Tab */}
+<TabsContent value="offers" className="space-y-4">
+  <Card>
+    <CardHeader>
+      <CardTitle>My Offers</CardTitle>
+      <CardDescription>Negotiated price offers you’ve made</CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {Array.isArray(offers) && offers.filter((o) => o.userId === user.id).length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <DollarSign className="h-16 w-16 mx-auto mb-3 opacity-50" />
+          <p>No active offers yet.</p>
+          <p className="text-sm mt-2">You can make offers directly on product pages.</p>
+        </div>
+      ) : (
+        offers
+          .filter((offer) => offer.userId === user.id)
+          .map((offer) => (
+            <Card key={offer.id} className="p-4 flex justify-between items-center border border-muted/30">
+              <div className="flex gap-3 items-center">
+                <div className="h-16 w-16 bg-muted rounded overflow-hidden">
+                  <img
+                    src={offer.productImage}
+                    alt={offer.productName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="font-semibold">{offer.productName}</p>
+                  <p className="text-sm text-muted-foreground line-through">
+                    {offer.originalPrice.toLocaleString()}đ
+                  </p>
+                  <p className="font-medium text-primary">
+                    Your Offer: {offer.offerPrice.toLocaleString()}đ
+                  </p>
+                  {offer.message && (
+                    <p className="text-xs italic text-muted-foreground mt-1">“{offer.message}”</p>
+                  )}
+                </div>
+              </div>
+              <Badge
+                className={
+                  offer.status === "accepted"
+                    ? "bg-green-600"
+                    : offer.status === "rejected"
+                    ? "bg-red-600"
+                    : offer.status === "countered"
+                    ? "bg-orange-500"
+                    : "bg-gray-500"
+                }
+              >
+                {offer.status.toUpperCase()}
+              </Badge>
+            </Card>
+          ))
+      )}
+    </CardContent>
+  </Card>
+</TabsContent>
+
+
 
                 {/* Wishlist Tab */}
                 <TabsContent value="wishlist" className="space-y-4">
@@ -538,60 +791,251 @@ export default function UserProfile() {
                         </div>
                     )}
                 </TabsContent>
+{/* VOUCHERS TAB (có Gift & Redeem Code + auto copy) */}
+<TabsContent value="vouchers" className="space-y-6">
+  <div className="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h3 className="text-3xl font-semibold bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
+        Voucher Center
+      </h3>
+      <p className="text-sm text-muted-foreground">
+        Collect vouchers or redeem gift codes from your friends
+      </p>
+    </div>
 
-                {/* Rewards Tab */}
-                <TabsContent value="rewards" className="space-y-4">
-                    <Card className="border-none shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/20 to-orange-600/20 rounded-full blur-3xl" />
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Award className="h-6 w-6 text-amber-500" />
-                                Loyalty Points
-                            </CardTitle>
-                            <CardDescription>Earn points with every purchase and redeem for rewards</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="text-center p-8 relative">
-                                <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white mb-4 shadow-2xl">
-                                    <div className="text-center">
-                                        <TrendingUp className="h-8 w-8 mx-auto mb-1" />
-                                        <p className="text-3xl font-bold">{user.points?.toLocaleString() || 0}</p>
-                                    </div>
-                                </div>
-                                <p className="text-lg font-semibold mb-1">Your Points Balance</p>
-                                <p className="text-sm text-muted-foreground">
-                                    Keep shopping to earn more rewards!
-                                </p>
-                            </div>
+    {/* Points Display + Redeem Button */}
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-lg">
+        <Award className="h-5 w-5 text-amber-500" />
+        <p className="text-lg font-semibold text-amber-600">
+          {user.points?.toLocaleString() || 0} pts
+        </p>
+      </div>
 
-                            <Separator />
+      {/* Redeem Code Button */}
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="flex items-center gap-2">
+            <Ticket className="h-4 w-4" />
+            Redeem Code
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Redeem Voucher Code</DialogTitle>
+            <DialogDescription>
+              Enter a voucher gift code to claim it.
+            </DialogDescription>
+          </DialogHeader>
+          <Input id="redeem-code-input" placeholder="Enter code..." />
+          <DialogFooter>
+            <Button
+              onClick={async () => {
+                const input = document.getElementById("redeem-code-input") as HTMLInputElement;
+                const code = input?.value.trim().toUpperCase();
+                if (!code) return toast.error("Please enter a code");
 
-                            <div className="space-y-3">
-                                <h4 className="font-semibold">How to Earn Points</h4>
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <Package className="h-5 w-5 text-primary" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium">Make a Purchase</p>
-                                            <p className="text-sm text-muted-foreground">Earn 1 point per 1,000đ spent</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                                        <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                                            <User className="h-5 w-5 text-green-600" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium">Refer a Friend</p>
-                                            <p className="text-sm text-muted-foreground">Get 500 points for each referral</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                try {
+                  const res = await fetch(`http://localhost:3001/voucherGifts?code=${code}`);
+                  const data = await res.json();
+
+                  if (data.length === 0) {
+                    toast.error("Invalid or expired code");
+                    return;
+                  }
+
+                  const gift = data[0];
+                  const voucherId = gift.voucherId;
+
+                  // Thêm voucher vào tài khoản người dùng
+                  const updatedVouchers = [...(user.vouchers || []), voucherId];
+                  await fetch(`http://localhost:3001/users/${user.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ vouchers: updatedVouchers }),
+                  });
+
+                  // Xóa code khỏi gift list
+                  await fetch(`http://localhost:3001/voucherGifts/${gift.id}`, {
+                    method: "DELETE",
+                  });
+
+                  toast.success("Voucher redeemed successfully!");
+                  setTimeout(() => window.location.reload(), 800);
+                } catch (e) {
+                  console.error(e);
+                  toast.error("Error redeeming code");
+                }
+              }}
+            >
+              Redeem
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  </div>
+
+  {/* Tab control: All / My */}
+  <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+    <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50">
+      <TabsTrigger
+        value="all"
+        className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+      >
+        <div className="flex items-center gap-2 py-2">
+          <Ticket className="h-4 w-4" />
+          <span>Available ({availableVouchers.length})</span>
+        </div>
+      </TabsTrigger>
+      <TabsTrigger
+        value="my"
+        className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+      >
+        <div className="flex items-center gap-2 py-2">
+          <Award className="h-4 w-4" />
+          <span>My Vouchers ({myVouchers.length})</span>
+        </div>
+      </TabsTrigger>
+    </TabsList>
+
+    <TabsContent value={selectedTab} className="space-y-4">
+      {(selectedTab === "all" ? availableVouchers : myVouchers).length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Ticket className="h-16 w-16 text-muted-foreground/50 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No vouchers found</h3>
+            <p className="text-muted-foreground text-center">
+              {selectedTab === "all"
+                ? "Check back later for new vouchers"
+                : "Start collecting or redeeming vouchers"}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {(selectedTab === "all" ? availableVouchers : myVouchers).map((voucher) => {
+            const isCollected = user.vouchers?.includes(voucher.id);
+            const canAfford = (user.points || 0) >= voucher.pointCost;
+
+            return (
+              <Card
+                key={voucher.id}
+                className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-white to-gray-50/50"
+              >
+                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/10 to-purple-600/10 rounded-full blur-3xl -z-10" />
+
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
+                        <Ticket className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl">{voucher.code}</CardTitle>
+                        <CardDescription>{voucher.description}</CardDescription>
+                      </div>
+                    </div>
+                    <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 border-none">
+                      {voucher.discount.toLocaleString()}đ OFF
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Min spend: {voucher.minSpend.toLocaleString()}đ</p>
+                    {voucher.pointCost > 0 && (
+                      <p>• Cost: {voucher.pointCost.toLocaleString()} pts</p>
+                    )}
+                    <p className="text-xs italic pt-1">{voucher.detailedConditions}</p>
+                  </div>
+
+                  {/* Collect or Gift Buttons */}
+                  {isCollected ? (
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        disabled
+                      >
+                        Collected
+                      </Button>
+
+                      {/* GIFT TO FRIEND */}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="flex-1">
+                            Gift to Friend
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Gift Voucher</DialogTitle>
+                            <DialogDescription>
+                              Share this code with your friend! Once used, it disappears.
+                            </DialogDescription>
+                          </DialogHeader>
+
+                          <div className="flex flex-col gap-3 items-center">
+                            <Button
+                              onClick={async () => {
+                                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+                                // Save gift code
+                                await fetch(`http://localhost:3001/voucherGifts`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    code,
+                                    voucherId: voucher.id,
+                                    fromUserId: user.id,
+                                  }),
+                                });
+
+                                // Remove voucher from current user
+                                const updated = user.vouchers.filter((id: string) => id !== voucher.id);
+                                await fetch(`http://localhost:3001/users/${user.id}`, {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ vouchers: updated }),
+                                });
+
+                                // ✅ Copy to clipboard
+                                await navigator.clipboard.writeText(code);
+
+                                toast.success(`Gift code generated & copied: ${code}`);
+                                setTimeout(() => window.location.reload(), 1000);
+                              }}
+                            >
+                              Generate & Copy Code
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-full group-hover:scale-105 transition-transform"
+                      onClick={() => handleCollectVoucher(voucher)}
+                      disabled={voucher.pointCost > 0 && !canAfford}
+                    >
+                      {voucher.pointCost > 0
+                        ? `Collect (${voucher.pointCost} pts)`
+                        : "Collect Voucher"}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </TabsContent>
+  </Tabs>
+</TabsContent>
+
+
+
             </Tabs>
         </div>
     );

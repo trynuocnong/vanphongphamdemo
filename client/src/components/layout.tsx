@@ -35,19 +35,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link href="/collections" className="hover:text-primary transition-colors">All Products</Link>
               <Link href="/bestsellers" className="hover:text-primary transition-colors">Bestsellers</Link>
               <Link href="/new-arrivals" className="hover:text-primary transition-colors">New Arrivals</Link>
-              <Link href="/vouchers" className="hover:text-primary transition-colors">Vouchers</Link>
             </nav>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="relative hidden sm:block">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="h-9 w-64 rounded-md border border-input bg-transparent px-9 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
+
 
             <Button variant="ghost" size="icon" className="relative" onClick={toggleCart}>
               <ShoppingCart className="h-5 w-5" />
