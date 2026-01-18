@@ -1,27 +1,35 @@
 
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import heroImg from "@assets/generated_images/minimalist_stationery_workspace_hero.png";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
-
+import ProductCard from "@/components/product-card";
+import ProductQuickView from "@/components/product-quick-view";
+import { Product } from "@/types";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 
 export default function Home() {
-  const { products, addToCart } = useStore();
+  const { products } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   // ✅ Không hiển thị sản phẩm bị xóa
-  const activeProducts = products.filter(p => !p.isDeleted);
+const normalizedProducts = products.map(p => ({
+  ...p,
+  isDeleted: p.isDeleted ?? false,
+}));
+
+const activeProducts = normalizedProducts.filter(p => !p.isDeleted);
 
   // 🔍 Search
   const filteredProducts = activeProducts.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  p.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
 
   // 🔥 Bán chạy
   const bestsellers = [...filteredProducts]
@@ -32,10 +40,12 @@ export default function Home() {
   const newArrivals = [...filteredProducts]
     .filter(p => p.isNew)
     .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() -
-        new Date(a.createdAt).getTime()
-    )
+  (a, b) =>
+    new Date(b.createdAt!).getTime() -
+    new Date(a.createdAt!).getTime()
+)
+
+    
     .slice(0, 4);
 
   // 💸 Sale
@@ -46,92 +56,150 @@ export default function Home() {
   return (
     <div className="space-y-16 pb-16">
       {/* Hero Section */}
-      <section className="relative h-[600px] w-full overflow-hidden flex items-center justify-center text-center">
+      <section className="relative h-[600px] w-full overflow-hidden flex items-center justify-center text-center bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5">
         <div
-          className="absolute inset-0 bg-cover bg-center z-0"
+          className="absolute inset-0 bg-cover bg-center opacity-10 group-hover:scale-110 transition-transform duration-700"
           style={{ backgroundImage: `url(${heroImg})` }}
         />
-        <div className="absolute inset-0 bg-black/20 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
 
-        <div className="relative z-20 space-y-6 max-w-2xl px-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <h1 className="text-4xl md:text-6xl font-serif font-bold text-white tracking-tight">
-            Elevate Your Workspace
+        <div className="relative z-10 max-w-3xl px-4 space-y-8">
+          <h1 className="text-6xl md:text-7xl font-serif font-bold leading-tight">
+            <span className="bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Crafted for
+            </span>
+            <br />
+            <span className="text-foreground">the Modern Mind</span>
           </h1>
-          <p className="text-lg text-white/90 md:text-xl font-light">
-            Curated stationery for clarity, creativity, and calm.
+          <p className="text-xl text-muted-foreground">
+            Minimalist stationery, crafted with care and attention to detail
           </p>
-          <div className="flex gap-4 justify-center pt-4">
-            <Button size="lg" className="bg-white text-black hover:bg-white/90 border-none">Shop Collection</Button>
+          <div className="flex gap-4 justify-center">
+            <Link href="/collections">
+              <Button size="lg" className="text-lg px-8 shadow-xl hover:shadow-2xl transition-all">
+                Shop Now
+              </Button>
+            </Link>
+            <Link href="/about">
+              <Button variant="outline" size="lg" className="text-lg px-8">
+                Learn More
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Global Search Bar Section */}
-      <div className="container px-4">
-        <div className="relative max-w-xl mx-auto">
-          <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+      {/* Global Search */}
+      <section className="container px-4">
+        <div className="max-w-2xl mx-auto relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            className="pl-10 pr-10 h-12 text-lg shadow-sm"
-            placeholder="Search for notebooks, pens, organizers..."
+            placeholder="Search products..."
+            className="pl-12 pr-12 h-14 text-lg rounded-full shadow-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           {searchTerm && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
               onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-3 h-6 w-6 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
-              aria-label="Clear search"
             >
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
+              <X className="h-4 w-4" />
+            </Button>
           )}
         </div>
-        {searchTerm && (
-          <p className="text-center text-sm text-muted-foreground mt-2">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
-          </p>
-        )}
-      </div>
+      </section>
 
-      {/* Categories Grid */}
+      {/* Category Showcase */}
       <section className="container px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {["Notebooks", "Writing", "Desk", "Paper"].map((cat) => (
-            <div key={cat} className="group relative aspect-square bg-muted overflow-hidden rounded-lg cursor-pointer" onClick={() => setSearchTerm(cat)}>
-              <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-colors" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <h3 className="text-xl font-serif font-medium">{cat}</h3>
+        <h2 className="text-3xl font-serif font-bold text-center mb-12 text-primary">
+          Shop by Category
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[
+            { name: "Notebooks", emoji: "📓", gradient: "from-blue-500 to-cyan-500", category: "c1" },
+            { name: "Writing", emoji: "✒️", gradient: "from-purple-500 to-pink-500", category: "c2" },
+            { name: "Desk", emoji: "🗂️", gradient: "from-orange-500 to-red-500", category: "c3" },
+            { name: "Paper", emoji: "📄", gradient: "from-green-500 to-teal-500", category: "c4" },
+          ].map((cat, idx) => (
+            <Link key={idx} href={`/collections?category=${cat.category}`}>
+              <div className="group relative h-48 rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-br ${cat.gradient} p-6 flex flex-col justify-between hover:shadow-2xl transition-all duration-300">
+                <div style={{ background: `linear-gradient(to right, rgb(19, 78, 94), rgb(113, 178, 128))` }} className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+                <div className="relative z-10">
+                  <div className="text-5xl mb-2 transform transition-transform">{cat.emoji}</div>
+                  <h3 className="text-2xl font-serif font-bold text-white">{cat.name}</h3>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-white/50 via-white/80 to-white/50 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
 
+      {/* Product Sections */}
       {searchTerm ? (
-        <ProductSection title="Search Results" products={filteredProducts} id="search-results" addToCart={addToCart} showEmptyState={true} />
+        <ProductSection
+          title="Search Results"
+          products={filteredProducts}
+          onQuickView={setQuickViewProduct}
+          showEmptyState={true}
+        />
       ) : (
         <>
-          <ProductSection title="Bestsellers" products={bestsellers} id="bestsellers" addToCart={addToCart} />
-          <ProductSection title="New Arrivals" products={newArrivals} id="new" addToCart={addToCart} />
-          {onSale.length > 0 && <ProductSection title="On Sale" products={onSale} id="sale" addToCart={addToCart} />}
+          <ProductSection
+            title="Bestsellers"
+            products={bestsellers}
+            onQuickView={setQuickViewProduct}
+            showRanking
+          />
+          <ProductSection
+            title="New Arrivals"
+            products={newArrivals}
+            onQuickView={setQuickViewProduct}
+            showNewBadge
+          />
+          {onSale.length > 0 && (
+            <ProductSection
+              title="On Sale"
+              products={onSale}
+              onQuickView={setQuickViewProduct}
+            />
+          )}
         </>
       )}
+
+      {/* Quick View Modal */}
+      <ProductQuickView
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+      />
     </div>
   );
 }
 
-function ProductSection({ title, products, id, addToCart, showEmptyState = false }: {
+function ProductSection({
+  title,
+  products,
+  onQuickView,
+  showEmptyState = false,
+  showRanking = false,
+  showNewBadge = false
+}: {
   title: string;
-  products: any[];
-  id: string;
-  addToCart: (product: any, quantity: number, priceOverride?: number) => void;
+  products: Product[];
+  onQuickView: (product: Product) => void;
   showEmptyState?: boolean;
+  showRanking?: boolean;
+  showNewBadge?: boolean;
 }) {
 
   if (products.length === 0 && !showEmptyState) return null;
 
   return (
-    <section id={id} className="container px-4">
+    <section className="container px-4">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl font-serif font-bold text-primary">{title}</h2>
       </div>
@@ -148,49 +216,15 @@ function ProductSection({ title, products, id, addToCart, showEmptyState = false
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <Card key={product.id} className="group border-none shadow-none bg-transparent">
-              <CardContent className="p-0 relative aspect-square bg-muted mb-4 overflow-hidden rounded-md">
-                <Link href={`/product/${product.id}`}>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </Link>
-                {product.isNew && <Badge className="absolute top-2 left-2 bg-primary">New</Badge>}
-                {product.isSale && <Badge variant="destructive" className="absolute top-2 left-2">Sale</Badge>}
-                {product.stock <= 0 && <Badge variant="secondary" className="absolute top-2 right-2 bg-black/70 text-white">Out of Stock</Badge>}
-              </CardContent>
-              <CardFooter className="p-0 block">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <Link href={`/product/${product.id}`}>
-                      <h3 className="font-medium text-lg leading-none mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
-                    </Link>
-                    <p className="text-sm text-muted-foreground capitalize">{product.categoryName}</p>
-                  </div>
-                  <div className="text-right">
-                    {product.originalPrice && (
-                      <span className="text-xs text-muted-foreground line-through block">{product.originalPrice.toLocaleString()}đ</span>
-                    )}
-                    <span className="font-semibold">{product.price.toLocaleString()}đ</span>
-                  </div>
-                </div>
-                <Button
-                  className="w-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  variant="outline"
-                  disabled={product.stock <= 0}
-                  onClick={() => {
-                    addToCart(product, 1);
-                  }}
-                >
-                  {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
-                </Button>
-
-
-              </CardFooter>
-            </Card>
+          {products.map((product, idx) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onQuickView={onQuickView}
+              showRanking={showRanking}
+              ranking={idx + 1}
+              showNewBadge={showNewBadge}
+            />
           ))}
         </div>
       )}

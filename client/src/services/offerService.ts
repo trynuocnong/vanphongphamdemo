@@ -48,7 +48,7 @@ export const getOffers = async () => {
 // ================== ADMIN RESPOND ==================
 export const respondToOffer = async (
   offerId: string,
-  status: "accepted" | "rejected"
+  status: "pending" | "accepted" | "rejected"
 ) => {
   const payload: any = { status };
 

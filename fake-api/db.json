@@ -200,41 +200,6 @@
   ],
   "products": [
     {
-      "id": "1",
-      "name": "Premium Linen Notebook",
-      "price": 150000,
-      "description": "A high-quality linen cover notebook with 100gsm cream paper. Perfect for bullet journaling or sketching.",
-      "stock": 45,
-      "sold": 120,
-      "categoryId": "c1",
-      "categoryName": "Notebooks",
-      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
-      "images": [
-        "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800"
-      ],
-      "isNew": true,
-      "allowOffers": true,
-      "autoAcceptPrice": 140000,
-      "autoRejectPrice": 100000,
-      "feedbacks": [
-        {
-          "id": "f1",
-          "user": "Alice",
-          "rating": 5,
-          "comment": "Amazing paper quality!",
-          "date": "2023-10-15"
-        },
-        {
-          "id": "f2",
-          "user": "Bob",
-          "rating": 4,
-          "comment": "Cover feels great.",
-          "date": "2023-10-10"
-        }
-      ],
-      "createdAt": "2023-10-01T10:00:00Z"
-    },
-    {
       "name": "Solid Brass Fountain Pen",
       "price": 450000,
       "stock": 12,
@@ -349,7 +314,7 @@
   "offers": [
     {
       "id": "69886016-424f-4eb4-90a1-880dc3ec8bb9",
-      "productId": "1",
+      "productId": null,
       "productName": "Premium Linen Notebook",
       "productImage": "https://images.unsplash.com/photo-1544816155-12df9643f363",
       "originalPrice": 150000,
@@ -363,7 +328,7 @@
     },
     {
       "id": "6f47d6f1-a2bb-43c5-86fd-d16b64081e36",
-      "productId": "1",
+      "productId": null,
       "userId": "u2",
       "offerPrice": 100000,
       "message": "heheboi",
@@ -617,7 +582,7 @@
     {
       "id": "baNJHW",
       "userId": "u1",
-      "productId": "1",
+      "productId": null,
       "name": "Premium Linen Notebook",
       "price": 150000,
       "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
@@ -671,7 +636,7 @@
     {
       "id": "eCbmZA",
       "userId": "u2",
-      "productId": "1",
+      "productId": null,
       "name": "Premium Linen Notebook",
       "price": 150000,
       "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",

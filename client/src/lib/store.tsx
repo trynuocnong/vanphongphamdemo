@@ -225,7 +225,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await updateUserAPI(id, updatedUser);
 
     // update store
-    setUsers(prev => prev.map(u => (u.id === user.id ? updatedUser : u)));
+    setUsers(prev => {
+  if (!user) return prev;
+  return prev.map(u => (u.id === user.id ? updatedUser : u));
+});
+
 
     setUser(updatedUser);
     localStorage.setItem("auth_user", JSON.stringify(updatedUser));

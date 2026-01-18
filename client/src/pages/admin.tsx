@@ -46,7 +46,7 @@ export default function Admin() {
   const {
     user, products, offers, orders, categories, users, vouchers,
     addProduct, deleteProduct, updateProduct,
-    addCategory, updateCategory, deleteCategory,
+    // addCategory, updateCategory, deleteCategory,
     addVoucher, updateVoucher, deleteVoucher,
     respondToOffer, updateOrderStatus, updateUser
   } = useStore();
