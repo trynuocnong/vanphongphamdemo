@@ -20,8 +20,6 @@ import { getProducts, addProduct, updateProduct, deleteProduct } from "../servic
 import {
   getOffers,
   respondToOffer,
-  createOffer,
-  deleteOffer,
 } from "@/services/offerService";
 
 import {
@@ -46,14 +44,11 @@ export default function Admin() {
   const {
     user, products, offers, orders, categories, users, vouchers,
     addProduct, deleteProduct, updateProduct,
-    addCategory, updateCategory, deleteCategory,
-    addVoucher, updateVoucher, deleteVoucher,
-    respondToOffer, updateOrderStatus, updateUser
+updateOrderStatus, updateUser
   } = useStore();
   const role = localStorage.getItem("userRole");
 
   const [activeTab, setActiveTab] = useState("overview");
-  const { toast } = useToast();
 
   if (role !== "admin") return <Redirect to="/login" />;
 

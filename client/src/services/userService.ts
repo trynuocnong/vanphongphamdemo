@@ -85,3 +85,34 @@ export async function removeFromWishlist(userId: string, productId: string) {
   });
   return res.json();
 }
+
+// ---------- Address Management ----------
+export async function getAddressesByUserId(userId: string) {
+  const res = await fetch(`${API_URL}/addresses?userId=${userId}`);
+  return res.json();
+}
+
+export async function addAddress(address: any) {
+  const res = await fetch(`${API_URL}/addresses`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(address),
+  });
+  return res.json();
+}
+
+export async function updateAddress(id: string, address: any) {
+  const res = await fetch(`${API_URL}/addresses/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(address),
+  });
+  return res.json();
+}
+
+export async function deleteAddress(id: string) {
+  const res = await fetch(`${API_URL}/addresses/${id}`, { method: "DELETE" });
+  return res.ok;
+}
+
+

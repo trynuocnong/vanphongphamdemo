@@ -7,7 +7,11 @@ import {
   addProduct as addProductAPI,
   updateProduct as updateProductAPI,
   deleteProduct as deleteProductAPI,
+  addProductFeedback,
+  editProductFeedback,
+  deleteProductFeedback,
 } from "@/services/productService";
+
 
 import {
   getUsers,
@@ -215,14 +219,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("auth_user");
   };
 
-  const updateUser = async (id: string, data: Partial<User>) => {
-    const current = users.find((u) => u.id === id);
-    if (!current) return;
+const updateUser = async (id: string, data: Partial<User>) => {
+  const current = users.find((u) => u.id === id);
+  if (!current) return;
 
-    const updatedUser: User = {
-      ...current,
-      ...data,
-    };
+  const updatedUser: User = {
+    ...current,
+    ...data,
+    addresses: data.addresses || current.addresses || [], // ✅ fix mảng rỗng
+  };
+
 
     await updateUserAPI(id, updatedUser);
     setUsers((prev) => prev.map((u) => (u.id === id ? updatedUser : u)));
@@ -285,37 +291,50 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   /* ===================== CHECKOUT ===================== */
   const checkout = async (data: any) => {
-    if (!user || cart.length === 0) return;
+  if (!user || cart.length === 0) return;
 
-    const subtotal = cart.reduce((s, i) => s + i.priceUsed * i.quantity, 0);
-    const voucher = vouchers.find((v) => v.id === appliedVoucherId);
-    const discount = voucher ? voucher.discount : 0;
+  const subtotal = cart.reduce((s, i) => s + i.priceUsed * i.quantity, 0);
+  const voucher = vouchers.find((v) => v.id === appliedVoucherId);
+  const discount = voucher ? voucher.discount : 0;
 
-    const order: Order = {
-      userId: user.id,
-      items: cart.map((i) => ({
-        productId: i.productId,
-        name: i.product.name,
-        quantity: i.quantity,
-        price: i.priceUsed,
-      })),
-      total: Math.max(0, subtotal - discount),
-      status: "pending",
-      date: new Date().toISOString(),
-      voucherId: voucher?.id,
-      voucherDiscount: discount,
-      shippingAddress: data.shippingAddress,
-      paymentMethod: data.paymentMethod,
-    };
-
-    await createOrder(order);
-    await clearUserCart(user.id);
-    setAppliedVoucherId(undefined);
-    await refetchAll();
-    setCart([]);
-
-    toast.success("Thanh toán thành công");
+  const order: Order = {
+    userId: user.id,
+    items: cart.map((i) => ({
+      productId: i.productId,
+      name: i.product.name,
+      quantity: i.quantity,
+      price: i.priceUsed,
+    })),
+    total: Math.max(0, subtotal - discount),
+    status: "pending",
+    date: new Date().toISOString(),
+    voucherId: voucher?.id,
+    voucherDiscount: discount,
+    shippingAddress: data.shippingAddress,
+    paymentMethod: data.paymentMethod,
   };
+
+  await createOrder(order);
+
+  // ✅ Nếu có voucher thì xóa khỏi tài khoản user
+  if (voucher) {
+    const updatedUser = {
+      ...user,
+      vouchers: user.vouchers?.filter((id) => id !== voucher.id) || [],
+    };
+    await updateUserAPI(user.id, updatedUser);
+    setUser(updatedUser);
+    localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+  }
+
+  await clearUserCart(user.id);
+  setAppliedVoucherId(undefined);
+  await refetchAll();
+  setCart([]);
+
+  toast.success("Thanh toán thành công");
+};
+
 
   /* ===================== VOUCHER REDEEM ===================== */
   const redeemVoucher = async (voucherId: string) => {
@@ -352,31 +371,84 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await respondToOfferAPI(offerId, status);
     await refetchAll();
   };
+const addFeedback = async (productId: string, rating: number, comment: string) => {
+  if (!user) return;
 
-  const addFeedback = async (productId: string, rating: number, comment: string) => {
-    if (!user) return;
+  const product = products.find((p) => p.id === productId);
+  if (!product) return;
 
-    const product = products.find((p) => p.id === productId);
-    if (!product) return;
+  const now = new Date().toISOString();
 
-    const feedback = {
-      userId: user.id,
-      userName: user.name,
-      rating,
-      comment,
-      date: new Date().toISOString(),
-    };
-
-    const updatedProduct = {
-      ...product,
-      feedbacks: [...(product.feedbacks || []), feedback],
-    };
-
-    await updateProductAPI(productId, updatedProduct);
-    await refetchAll();
-
-    toast.success("Review submitted");
+  const feedback = {
+    id: crypto.randomUUID(),
+    userId: user.id,
+    user: user.name,
+    rating,
+    comment,
+    date: now,
   };
+
+  const updatedProduct = {
+    ...product,
+    feedbacks: [...(product.feedbacks || []), feedback],
+  };
+
+  await updateProductAPI(productId, updatedProduct);
+
+  setProducts(prev => prev.map(p => p.id === productId ? updatedProduct : p));
+
+  const completedOrders = orders.filter(
+    o => o.userId === user.id && o.status.toLowerCase() === "completed" &&
+         o.items.some(i => i.productId === productId)
+  );
+
+  const hasReviewedAfterOrder = completedOrders.some(order =>
+    !product.feedbacks?.some(fb =>
+      fb.userId === user.id && new Date(fb.date) >= new Date(order.date)
+    )
+  );
+
+  if (hasReviewedAfterOrder && completedOrders.length > 0) {
+    const updatedUser = { ...user, points: (user.points || 0) + 10 };
+    await updateUserAPI(user.id, updatedUser);
+    setUser(updatedUser);
+    localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+    toast.success("Review submitted (+10 points!)");
+  } else {
+    toast.success("Review submitted!");
+  }
+};
+
+// Edit review
+const editFeedback = async (productId: string, feedbackId: string, rating: number, comment: string) => {
+  const product = products.find(p => p.id === productId);
+  if (!product) return;
+
+  const updatedFeedbacks = (product.feedbacks || []).map(fb =>
+    fb.id === feedbackId ? { ...fb, rating, comment } : fb
+  );
+
+  const updatedProduct = { ...product, feedbacks: updatedFeedbacks };
+  await updateProductAPI(productId, updatedProduct);
+
+  setProducts(prev => prev.map(p => p.id === productId ? updatedProduct : p));
+  toast.success("Review updated!");
+};
+
+// Delete review
+const deleteFeedback = async (productId: string, feedbackId: string) => {
+  const product = products.find(p => p.id === productId);
+  if (!product) return;
+
+  const updatedFeedbacks = (product.feedbacks || []).filter(fb => fb.id !== feedbackId);
+  const updatedProduct = { ...product, feedbacks: updatedFeedbacks };
+
+  await updateProductAPI(productId, updatedProduct);
+  setProducts(prev => prev.map(p => p.id === productId ? updatedProduct : p));
+
+  toast.success("Review deleted.");
+};
+
 
   /* ===================== PRODUCTS ===================== */
   const addProduct = async (data: any) => {
@@ -411,10 +483,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toast.success("Voucher deleted");
   };
 
-  const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
-    await updateOrderStatusAPI(orderId, status);
-    await refetchAll();
-  };
+const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
+  await updateOrderStatusAPI(orderId, status);
+
+  // ✅ Nếu đơn hàng hoàn tất -> cộng điểm
+  if (status.toLowerCase() === "completed") {
+    const order = orders.find((o) => o.id === orderId);
+    if (order) {
+      const buyer = users.find((u) => u.id === order.userId);
+      if (buyer && order.total) {
+        // Mỗi 1000 đồng = 1 điểm
+        const earnedPoints = Math.floor(order.total / 1000);
+        const updatedUser = {
+          ...buyer,
+          points: (buyer.points || 0) + earnedPoints,
+        };
+
+        await updateUserAPI(buyer.id, updatedUser);
+
+        toast.success(`+${earnedPoints} điểm đã được cộng cho ${buyer.name}`);
+      }
+    }
+  }
+
+  await refetchAll();
+};
+
 
   /* ===================== WISHLIST ===================== */
   const toggleWishlist = async (productId: string) => {
@@ -479,13 +573,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         updateVoucher,
         deleteVoucher,
         updateOrderStatus,
-        addFeedback,
         toggleWishlist,
         isInWishlist,
         openCart,
         closeCart,
         toggleCart,
         refetchAll,
+    addFeedback,
+    editFeedback,
+    deleteFeedback,
       }}
     >
       {children}

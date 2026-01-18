@@ -35,6 +35,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link href="/collections" className="hover:text-primary transition-colors">All Products</Link>
               <Link href="/bestsellers" className="hover:text-primary transition-colors">Bestsellers</Link>
               <Link href="/new-arrivals" className="hover:text-primary transition-colors">New Arrivals</Link>
+               <Link href="/onSale" className="hover:text-primary transition-colors">On Sale</Link>
+
             </nav>
           </div>
 

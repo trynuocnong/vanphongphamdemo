@@ -3,15 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { registerUser, loginUser } from "@/services/userService";
+import { registerUser, loginUser, getUsers } from "@/services/userService";
 import { useStore } from "@/lib/store";
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { login } = useStore();
+const { login, user, refetchAll } = useStore();
 
   const [role, setRole] = useState<"user" | "admin">("user");
   const [email, setEmail] = useState("");
@@ -21,6 +21,11 @@ export default function Login() {
   const [regEmail, setRegEmail] = useState("");
   const [regPass, setRegPass] = useState("");
 
+    useEffect(() => {
+    if (user) {
+      setLocation(user.role === "admin" ? "/admin" : "/");
+    }
+  }, [user, setLocation]);
   // --- LOGIN ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,24 +61,59 @@ if (success) {
   };
 
   // --- REGISTER ---
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await registerUser({
-        name: regName,
-        email: regEmail,
-        password: regPass,
-        role: "user",
-      });
+ const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-      toast.success("Account created successfully! You can now login.");
+  // 🧩 Validate trống
+  if (!regName.trim() || !regEmail.trim() || !regPass.trim()) {
+    toast.error("Vui lòng nhập đầy đủ thông tin!");
+    return;
+  }
 
-      setEmail(regEmail);
-      setPassword("");
-    } catch {
-      toast.error("Registration failed, please try again");
+  // 🧩 Validate độ dài mật khẩu
+  if (regPass.length < 6) {
+    toast.error("Mật khẩu phải có ít nhất 6 ký tự!");
+    return;
+  }
+
+  try {
+    // 🔍 Kiểm tra email đã tồn tại
+    const users = await getUsers();
+    const emailExists = users.some(
+      (u: any) => u.email.toLowerCase() === regEmail.toLowerCase()
+    );
+
+    if (emailExists) {
+      toast.error("Email đã được đăng ký!");
+      return;
     }
-  };
+
+    // 🧠 Tạo tài khoản mới
+    await registerUser({
+      name: regName.trim(),
+      email: regEmail.trim(),
+      password: regPass,
+      role: "user",
+    });
+
+    // 🔄 Refetch để store cập nhật danh sách user mới (không cần reload)
+    await refetchAll();
+    toast.success("Tạo tài khoản thành công! Hãy đăng nhập.");
+
+    // Tự động điền email vào login tab
+    setEmail(regEmail);
+    setPassword("");
+
+    // Chuyển sang tab Login ngay
+    const loginTab = document.querySelector('[data-state="login"]');
+    if (loginTab) (loginTab as HTMLElement).click();
+  } catch (err) {
+    console.error(err);
+    toast.error("Đăng ký thất bại, vui lòng thử lại.");
+  }
+};
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/20">

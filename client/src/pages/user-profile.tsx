@@ -42,6 +42,21 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { useLocation } from "wouter";
+
+import {
+  collectVoucher,
+  redeemGiftCode,
+  deleteGiftCode,
+} from "@/services/voucherService";
+import {
+  getAddressesByUserId,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+} from "@/services/userService";
+import { getOffers } from "@/services/offerService";
+
 
 function AddressCard({ address, onEdit, onDelete, isDefault }: {
     address: any;
@@ -118,17 +133,52 @@ function VoucherCard({ voucher }: { voucher: any }) {
 }
 
 export default function UserProfile() {
-    const { user, vouchers, orders, offers, wishlist, toggleWishlist, products } = useStore();
-    const [isEditingProfile, setIsEditingProfile] = useState(false);
-    const [editedUser, setEditedUser] = useState(user);
-    const [addresses, setAddresses] = useState<any[]>([]);
-const [selectedAddress, setSelectedAddress] = useState<any>(null);
+  const { user, vouchers, orders, offers, wishlist, toggleWishlist, products } =
+    useStore();
+  const [, setLocation] = useLocation();
+
+  if (!user) {
+    setLocation("/login");
+    return null;
+  }
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editedUser, setEditedUser] = useState(user);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState(
+    () => localStorage.getItem("activeTab") || "personal"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("activeTab", activeTab);
+  }, [activeTab]);
+
+  /* === OFFERS FETCH FIX === */
+  const [offersData, setOffersData] = useState<any[]>([]);
+  const [isLoadingOffers, setIsLoadingOffers] = useState(true);
+
+  useEffect(() => {
+    const loadOffers = async () => {
+      try {
+        setIsLoadingOffers(true);
+        const data = await getOffers();
+        setOffersData(data);
+      } catch (err) {
+        console.error("Failed to load offers:", err);
+      } finally {
+        setIsLoadingOffers(false);
+      }
+    };
+    if (activeTab === "offers" && user) loadOffers();
+  }, [activeTab, user]);
 
 const [searchTerm, setSearchTerm] = useState("");
 const [selectedTab, setSelectedTab] = useState("all");
 
-const availableVouchers = vouchers.filter((v) => !user.vouchers?.includes(v.id));
-const myVouchers = vouchers.filter((v) => user.vouchers?.includes(v.id));
+const availableVouchers = vouchers.filter((v) => !user?.vouchers?.includes(v.id));
+const myVouchers = vouchers.filter((v) => user?.vouchers?.includes(v.id));
+
 
 const filteredVouchers = (
   selectedTab === "all" ? availableVouchers : myVouchers
@@ -138,24 +188,19 @@ const filteredVouchers = (
     v.description.toLowerCase().includes(searchTerm.toLowerCase())
 );
 
+// Thêm vào trong component UserProfile()
 const handleCollectVoucher = async (voucher: any) => {
+  const updatedVouchers = [...(user.vouchers || []), voucher.id];
+  const updatedPoints =
+    voucher.pointCost > 0 ? (user.points || 0) - voucher.pointCost : user.points;
+
   try {
-    if (voucher.pointCost > 0 && (user.points || 0) < voucher.pointCost) {
-      toast.error(`You need ${voucher.pointCost} points to redeem this voucher`);
-      return;
-    }
-
-    const updatedVouchers = [...(user.vouchers || []), voucher.id];
-    const updatedPoints =
-      voucher.pointCost > 0 ? (user.points || 0) - voucher.pointCost : user.points;
-
-    const response = await fetch(`http://localhost:3001/users/${user.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ vouchers: updatedVouchers, points: updatedPoints }),
+    const success = await collectVoucher(user.id, voucher.id, {
+      vouchers: updatedVouchers,
+      points: updatedPoints,
     });
 
-    if (response.ok) {
+    if (success) {
       toast.success(
         voucher.pointCost > 0
           ? `Voucher collected! Used ${voucher.pointCost} points`
@@ -173,13 +218,13 @@ const handleCollectVoucher = async (voucher: any) => {
 
 // Load addresses of current user
 useEffect(() => {
-  if (user?.id) {
-    fetch(`http://localhost:3001/addresses?userId=${user.id}`)
-      .then(res => res.json())
-      .then(data => setAddresses(data))
-      .catch(err => console.error("Failed to load addresses:", err));
-  }
+  if (!user?.id) return;
+  (async () => {
+    const data = await getAddressesByUserId(user.id);
+    setAddresses(Array.isArray(data) ? data : []);
+  })();
 }, [user]);
+
 
 
     // Sync editedUser with user when user data loads
@@ -242,7 +287,6 @@ useEffect(() => {
             toast.error("Error updating profile");
         }
     };
-
     return (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
             {/* Header with Avatar */}
@@ -447,7 +491,12 @@ useEffect(() => {
             </div>
 
             {/* Tabs */}
-<Tabs defaultValue="personal" className="space-y-6">
+<Tabs
+  defaultValue={activeTab}
+  value={activeTab}
+  onValueChange={setActiveTab}
+  className="space-y-6"
+>
   <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
     <TabsTrigger value="personal" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
       <User className="h-4 w-4 mr-2" />
@@ -567,7 +616,106 @@ useEffect(() => {
           </Button>
         </DialogTrigger>
         {/* Dialog thêm/sửa địa chỉ giữ nguyên */}
-        {/* ... giữ nguyên logic thêm/sửa ở đây */}
+<DialogContent>
+  <DialogHeader>
+    <DialogTitle>
+      {selectedAddress?.id ? "Edit Address" : "Add New Address"}
+    </DialogTitle>
+    <DialogDescription>
+      {selectedAddress?.id
+        ? "Update your existing address information."
+        : "Enter your address details below."}
+    </DialogDescription>
+  </DialogHeader>
+
+  <div className="space-y-3 py-2">
+    <Label>Name</Label>
+    <Input
+      value={selectedAddress?.name || ""}
+      onChange={(e) =>
+        setSelectedAddress({ ...selectedAddress, name: e.target.value })
+      }
+    />
+    <Label>Phone</Label>
+    <Input
+      value={selectedAddress?.phone || ""}
+      onChange={(e) =>
+        setSelectedAddress({ ...selectedAddress, phone: e.target.value })
+      }
+    />
+    <Label>Address</Label>
+    <Input
+      value={selectedAddress?.address || ""}
+      onChange={(e) =>
+        setSelectedAddress({ ...selectedAddress, address: e.target.value })
+      }
+    />
+    <Label>City</Label>
+    <Input
+      value={selectedAddress?.city || ""}
+      onChange={(e) =>
+        setSelectedAddress({ ...selectedAddress, city: e.target.value })
+      }
+    />
+    <Label>Postal Code</Label>
+    <Input
+      value={selectedAddress?.postalCode || ""}
+      onChange={(e) =>
+        setSelectedAddress({ ...selectedAddress, postalCode: e.target.value })
+      }
+    />
+    <div className="flex items-center gap-2 mt-2">
+      <input
+        type="checkbox"
+        checked={selectedAddress?.isDefault || false}
+        onChange={(e) =>
+          setSelectedAddress({
+            ...selectedAddress,
+            isDefault: e.target.checked,
+          })
+        }
+      />
+      <Label>Set as default address</Label>
+    </div>
+  </div>
+
+  <DialogFooter>
+    <Button
+      onClick={async () => {
+        if (!user) return toast.error("Please log in first");
+        if (!selectedAddress?.name || !selectedAddress?.address) {
+          toast.error("Please fill in all required fields");
+          return;
+        }
+
+        const addressToSave = {
+          ...selectedAddress,
+          userId: user.id,
+          id: selectedAddress.id || crypto.randomUUID(),
+        };
+
+        try {
+if (selectedAddress.id) {
+  await updateAddress(selectedAddress.id, addressToSave);
+  toast.success("Address updated");
+} else {
+  await addAddress(addressToSave);
+  toast.success("Address added");
+}
+const updated = await getAddressesByUserId(user.id);
+setAddresses(updated);
+setSelectedAddress(null);
+
+        } catch (err) {
+          console.error(err);
+          toast.error("Failed to save address");
+        }
+      }}
+    >
+      Save
+    </Button>
+  </DialogFooter>
+</DialogContent>
       </Dialog>
     </div>
 
@@ -588,7 +736,10 @@ useEffect(() => {
             onEdit={() => setSelectedAddress(address)}
             onDelete={async () => {
               if (confirm("Delete this address?")) {
-                await fetch(`http://localhost:3001/addresses/${address.id}`, { method: "DELETE" });
+                await deleteAddress(address.id);
+toast.success("Address deleted");
+setAddresses(addresses.filter((a) => a.id !== address.id));
+
                 toast.success("Address deleted");
                 setAddresses(addresses.filter((a) => a.id !== address.id));
               }
@@ -658,65 +809,87 @@ useEffect(() => {
   </Card>
 </TabsContent>
 
-                {/* Offers Tab */}
-<TabsContent value="offers" className="space-y-4">
-  <Card>
-    <CardHeader>
-      <CardTitle>My Offers</CardTitle>
-      <CardDescription>Negotiated price offers you’ve made</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      {Array.isArray(offers) && offers.filter((o) => o.userId === user.id).length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <DollarSign className="h-16 w-16 mx-auto mb-3 opacity-50" />
-          <p>No active offers yet.</p>
-          <p className="text-sm mt-2">You can make offers directly on product pages.</p>
-        </div>
-      ) : (
-        offers
-          .filter((offer) => offer.userId === user.id)
-          .map((offer) => (
-            <Card key={offer.id} className="p-4 flex justify-between items-center border border-muted/30">
-              <div className="flex gap-3 items-center">
-                <div className="h-16 w-16 bg-muted rounded overflow-hidden">
-                  <img
-                    src={offer.productImage}
-                    alt={offer.productName}
-                    className="w-full h-full object-cover"
-                  />
+                {/* === OFFERS TAB === */}
+        <TabsContent value="offers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Offers</CardTitle>
+              <CardDescription>
+                Negotiated price offers you’ve made
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              {isLoadingOffers ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <p>Loading offers...</p>
                 </div>
-                <div>
-                  <p className="font-semibold">{offer.productName}</p>
-                  <p className="text-sm text-muted-foreground line-through">
-                    {offer.originalPrice.toLocaleString()}đ
-                  </p>
-                  <p className="font-medium text-primary">
-                    Your Offer: {offer.offerPrice.toLocaleString()}đ
-                  </p>
-                  {offer.message && (
-                    <p className="text-xs italic text-muted-foreground mt-1">“{offer.message}”</p>
-                  )}
-                </div>
-              </div>
-              <Badge
-                className={
-                  offer.status === "accepted"
-                    ? "bg-green-600"
-                    : offer.status === "rejected"
-                    ? "bg-red-600"
-                    : offer.status === "countered"
-                    ? "bg-orange-500"
-                    : "bg-gray-500"
-                }
-              >
-                {offer.status.toUpperCase()}
-              </Badge>
-            </Card>
-          ))
-      )}
-    </CardContent>
-  </Card>
-</TabsContent>
+              ) : (() => {
+                const myOffers = offersData.filter(
+                  (o) => o.userId === user.id
+                );
+                if (myOffers.length === 0)
+                  return (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <DollarSign className="h-16 w-16 mx-auto mb-3 opacity-50" />
+                      <p>No active offers yet.</p>
+                      <p className="text-sm mt-2">
+                        You can make offers directly on product pages.
+                      </p>
+                    </div>
+                  );
+
+                return (
+                  <div className="space-y-4">
+                    {myOffers.map((offer) => (
+                      <Card
+                        key={offer.id}
+                        className="p-4 flex justify-between items-center border border-muted/30"
+                      >
+                        <div className="flex gap-3 items-center">
+                          <div className="h-16 w-16 bg-muted rounded overflow-hidden">
+                            <img
+                              src={offer.productImage}
+                              alt={offer.productName}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{offer.productName}</p>
+                            <p className="text-sm text-muted-foreground line-through">
+                              {offer.originalPrice.toLocaleString()}đ
+                            </p>
+                            <p className="font-medium text-primary">
+                              Your Offer: {offer.offerPrice.toLocaleString()}đ
+                            </p>
+                            {offer.message && (
+                              <p className="text-xs italic text-muted-foreground mt-1">
+                                “{offer.message}”
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Badge
+                          className={
+                            offer.status === "accepted"
+                              ? "bg-green-600"
+                              : offer.status === "rejected"
+                              ? "bg-red-600"
+                              : offer.status === "countered"
+                              ? "bg-orange-500"
+                              : "bg-gray-500"
+                          }
+                        >
+                          {offer.status.toUpperCase()}
+                        </Badge>
+                      </Card>
+                    ))}
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
 
 
@@ -1014,15 +1187,16 @@ useEffect(() => {
                       </Dialog>
                     </div>
                   ) : (
-                    <Button
-                      className="w-full group-hover:scale-105 transition-transform"
-                      onClick={() => handleCollectVoucher(voucher)}
-                      disabled={voucher.pointCost > 0 && !canAfford}
-                    >
-                      {voucher.pointCost > 0
-                        ? `Collect (${voucher.pointCost} pts)`
-                        : "Collect Voucher"}
-                    </Button>
+<Button
+  className="w-full group-hover:scale-105 transition-transform"
+  onClick={() => handleCollectVoucher(voucher)}
+  disabled={voucher.pointCost > 0 && !canAfford}
+>
+  {voucher.pointCost > 0
+    ? `Collect (${voucher.pointCost} pts)`
+    : "Collect Voucher"}
+</Button>
+
                   )}
                 </CardContent>
               </Card>

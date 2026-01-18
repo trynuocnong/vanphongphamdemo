@@ -6,7 +6,7 @@
       "email": "admin@example.com",
       "password": "123",
       "role": "admin",
-      "points": 9935000,
+      "points": 9937050,
       "vouchers": [
         "v2",
         "v3"
@@ -32,9 +32,13 @@
       "email": "user@example.com",
       "password": "666666",
       "role": "user",
-      "points": 200,
+      "points": 7935,
       "vouchers": [
-        "v1"
+        "v1",
+        "v2",
+        "v3",
+        "9eb51046-39ff-4181-90e7-134d98cd7fdc",
+        "7c745809-cb0c-4b51-adc8-f2a505a4b9cb"
       ],
       "phone": "0901234567",
       "address": "123 Le Loi, District 1, HCMC",
@@ -80,6 +84,38 @@
       "role": "user",
       "phone": "0",
       "bio": "hehehe"
+    },
+    {
+      "id": "14ea",
+      "name": "bra",
+      "email": "dd@example.com",
+      "password": "666666",
+      "role": "user"
+    },
+    {
+      "id": "90f1",
+      "name": "n",
+      "email": "ddd@example.com",
+      "password": "666666",
+      "role": "user",
+      "phone": "0901234567",
+      "city": "Hồ Chí Minh",
+      "bio": "hlo",
+      "vouchers": [
+        "v1"
+      ],
+      "points": 460,
+      "wishlist": [
+        "1",
+        "4929"
+      ]
+    },
+    {
+      "id": "0582",
+      "name": "n",
+      "email": "ddnd@example.com",
+      "password": "666666",
+      "role": "user"
     }
   ],
   "addresses": [
@@ -122,6 +158,26 @@
       "postalCode": "75000",
       "userId": "u2",
       "isDefault": false
+    },
+    {
+      "id": "1ff7fbcf-c6d1-4407-a88a-c289cda3ec04",
+      "name": "trynuoclanh",
+      "phone": "0987823027",
+      "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+      "city": "Bình Dương",
+      "postalCode": "75000",
+      "userId": "90f1",
+      "isDefault": true
+    },
+    {
+      "id": "207674b6-9161-48f9-bef0-c5ddb3f8d466",
+      "name": "hehe git",
+      "phone": "0987823027",
+      "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+      "city": "Bình Dương",
+      "postalCode": "75000",
+      "isDefault": true,
+      "userId": "90f1"
     }
   ],
   "loginHistory": [
@@ -250,6 +306,14 @@
           "rating": 4,
           "comment": "Cover feels great.",
           "date": "2023-10-10"
+        },
+        {
+          "id": "779599aa-4f03-4195-8997-41266056b7d7",
+          "userId": "90f1",
+          "user": "n",
+          "rating": 5,
+          "comment": "nice brooo",
+          "date": "2026-01-18T22:31:36.517Z"
         }
       ],
       "createdAt": "2023-10-01T10:00:00Z"
@@ -339,7 +403,25 @@
       "allowOffers": true,
       "image": "https://images.unsplash.com/photo-1616627563516-1a431806adea?auto=format&fit=crop&q=80&w=800",
       "isNew": true,
-      "createdAt": "2026-01-10T10:00:00Z"
+      "createdAt": "2026-01-10T10:00:00Z",
+      "feedbacks": [
+        {
+          "id": "72d075be-d9ab-4685-8795-6a0bf1bdb2c9",
+          "userId": "u2",
+          "user": "Riven",
+          "rating": 2,
+          "comment": "de",
+          "date": "2026-01-18T19:22:25.850Z"
+        },
+        {
+          "id": "f57a2418-f241-4efc-985f-52b6dc5105ce",
+          "userId": "u2",
+          "user": "Riven",
+          "rating": 4,
+          "comment": "nice comeback",
+          "date": "2026-01-18T19:29:35.068Z"
+        }
+      ]
     }
   ],
   "vouchers": [
@@ -386,6 +468,15 @@
       "minSpend": 20000,
       "pointCost": 1000,
       "description": "100%",
+      "detailedConditions": "Content Farming"
+    },
+    {
+      "id": "8172c735-3990-4808-803a-53c8ae45ae0d",
+      "code": "STATIONERY",
+      "discount": 10000,
+      "minSpend": 50000,
+      "pointCost": 0,
+      "description": "10k",
       "detailedConditions": "Content Farming"
     }
   ],
@@ -451,6 +542,46 @@
       "offerPrice": 20000,
       "message": "please",
       "acceptedAt": "2026-01-13T16:06:18.176Z"
+    },
+    {
+      "id": "da77a9b6-60f1-4a35-930c-dca3e32a9a17",
+      "status": "accepted",
+      "createdAt": "2026-01-18T22:33:07.011Z",
+      "productId": "1",
+      "userId": "90f1",
+      "offerPrice": 10000,
+      "message": "please\n",
+      "acceptedAt": "2026-01-18T22:33:29.534Z"
+    },
+    {
+      "id": "cc97a6ea-5798-4a33-8a7b-ceb69a288e02",
+      "status": "accepted",
+      "createdAt": "2026-01-18T23:07:06.293Z",
+      "productId": "5",
+      "userId": "90f1",
+      "offerPrice": 100000,
+      "message": "huhu",
+      "acceptedAt": "2026-01-18T23:07:21.535Z"
+    },
+    {
+      "id": "19cae9e5-37d8-4154-bec6-aa8cf07e7164",
+      "status": "accepted",
+      "createdAt": "2026-01-18T23:19:48.859Z",
+      "productId": "4",
+      "userId": "90f1",
+      "offerPrice": 100000,
+      "message": "hehe",
+      "acceptedAt": "2026-01-18T23:20:02.117Z"
+    },
+    {
+      "id": "b10ca16c-8d56-48e3-af6f-2d8c4358115d",
+      "status": "accepted",
+      "createdAt": "2026-01-18T23:22:23.419Z",
+      "productId": "4929",
+      "userId": "90f1",
+      "offerPrice": 100000,
+      "message": "pls",
+      "acceptedAt": "2026-01-18T23:22:36.227Z"
     }
   ],
   "orders": [
@@ -466,7 +597,7 @@
         }
       ],
       "total": 285000,
-      "status": "pending",
+      "status": "completed",
       "date": "2025-12-27T03:12:56.273Z",
       "shippingAddress": {
         "name": "Michael Riven",
@@ -503,7 +634,7 @@
         }
       ],
       "total": 550000,
-      "status": "pending",
+      "status": "completed",
       "date": "2026-01-12T15:51:30.059Z",
       "shippingAddress": {
         "name": "trynuoclanh",
@@ -528,7 +659,7 @@
         }
       ],
       "total": 1500000,
-      "status": "shipping",
+      "status": "completed",
       "date": "2026-01-13T15:16:13.649Z",
       "shippingAddress": {
         "name": "Tu Nguyen",
@@ -577,7 +708,7 @@
         }
       ],
       "total": 5870000,
-      "status": "pending",
+      "status": "completed",
       "date": "2026-01-13T16:05:07.308Z",
       "voucherDiscount": 0,
       "shippingAddress": {
@@ -643,7 +774,7 @@
         }
       ],
       "total": 2040000,
-      "status": "pending",
+      "status": "completed",
       "date": "2026-01-17T04:13:08.295Z",
       "voucherDiscount": 0,
       "shippingAddress": {
@@ -667,7 +798,7 @@
         }
       ],
       "total": 600000,
-      "status": "pending",
+      "status": "completed",
       "date": "2026-01-18T03:00:12.309Z",
       "voucherDiscount": 0,
       "shippingAddress": {
@@ -735,6 +866,269 @@
         "isDefault": false
       },
       "paymentMethod": "credit_card"
+    },
+    {
+      "id": "8f2b",
+      "userId": "u2",
+      "items": [
+        {
+          "productId": "2",
+          "name": "Solid Brass Fountain Pen",
+          "quantity": 1,
+          "price": 450000
+        },
+        {
+          "productId": "4",
+          "name": "Washi Tape Set - Earth Tones",
+          "quantity": 5,
+          "price": 85000
+        },
+        {
+          "productId": "1",
+          "name": "Premium Linen Notebook",
+          "quantity": 4,
+          "price": 180000
+        }
+      ],
+      "total": 1595000,
+      "status": "completed",
+      "date": "2026-01-18T18:14:18.834Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "id": "2098",
+        "name": "Riven Mom",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000",
+        "userId": "u2",
+        "isDefault": false
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "a031",
+      "userId": "u2",
+      "items": [
+        {
+          "productId": "4929",
+          "name": "Aurora Sky Journal",
+          "quantity": 1,
+          "price": 190000
+        }
+      ],
+      "total": 190000,
+      "status": "completed",
+      "date": "2026-01-18T19:14:45.209Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "id": "2098",
+        "name": "Riven Mom",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000",
+        "userId": "u2",
+        "isDefault": false
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "3ab9",
+      "userId": "u2",
+      "items": [
+        {
+          "productId": "4929",
+          "name": "Aurora Sky Journal",
+          "quantity": 1,
+          "price": 190000
+        }
+      ],
+      "total": 190000,
+      "status": "completed",
+      "date": "2026-01-18T19:28:38.994Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "id": "addr3",
+        "userId": "u2",
+        "name": "Riven",
+        "phone": "0901234567",
+        "address": "123 Le Loi, District 1, HCMC",
+        "city": "Hồ Chí Minh",
+        "postalCode": "700000",
+        "isDefault": false
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "942a",
+      "userId": "90f1",
+      "items": [
+        {
+          "productId": "5",
+          "name": "Minimalist Weekly Planner",
+          "quantity": 5,
+          "price": 120000
+        }
+      ],
+      "total": 600000,
+      "status": "pending",
+      "date": "2026-01-18T22:10:41.569Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "id": "1ff7fbcf-c6d1-4407-a88a-c289cda3ec04",
+        "name": "trynuoclanh",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000",
+        "userId": "90f1",
+        "isDefault": true
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "48c3",
+      "userId": "90f1",
+      "items": [
+        {
+          "productId": "5",
+          "name": "Minimalist Weekly Planner",
+          "quantity": 2,
+          "price": 120000
+        }
+      ],
+      "total": 240000,
+      "status": "pending",
+      "date": "2026-01-18T22:11:08.166Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "id": "1ff7fbcf-c6d1-4407-a88a-c289cda3ec04",
+        "name": "trynuoclanh",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000",
+        "userId": "90f1",
+        "isDefault": true
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "c185",
+      "userId": "90f1",
+      "items": [
+        {
+          "productId": "1",
+          "name": "Premium Linen Notebook",
+          "quantity": 1,
+          "price": 180000
+        }
+      ],
+      "total": 170000,
+      "status": "completed",
+      "date": "2026-01-18T22:15:03.717Z",
+      "voucherId": "v1",
+      "voucherDiscount": 10000,
+      "shippingAddress": {
+        "id": "1ff7fbcf-c6d1-4407-a88a-c289cda3ec04",
+        "name": "trynuoclanh",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000",
+        "userId": "90f1",
+        "isDefault": true
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "d9d6",
+      "userId": "90f1",
+      "items": [
+        {
+          "productId": "1",
+          "name": "Premium Linen Notebook",
+          "quantity": 2,
+          "price": 180000
+        }
+      ],
+      "total": 350000,
+      "status": "pending",
+      "date": "2026-01-18T22:18:22.802Z",
+      "voucherId": "v1",
+      "voucherDiscount": 10000,
+      "shippingAddress": {
+        "id": "1ff7fbcf-c6d1-4407-a88a-c289cda3ec04",
+        "name": "trynuoclanh",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000",
+        "userId": "90f1",
+        "isDefault": true
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "f423",
+      "userId": "90f1",
+      "items": [
+        {
+          "productId": "1",
+          "name": "Premium Linen Notebook",
+          "quantity": 1,
+          "price": 10000
+        },
+        {
+          "productId": "2",
+          "name": "Solid Brass Fountain Pen",
+          "quantity": 1,
+          "price": 450000
+        }
+      ],
+      "total": 460000,
+      "status": "cancelled",
+      "date": "2026-01-18T22:38:24.309Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "id": "1ff7fbcf-c6d1-4407-a88a-c289cda3ec04",
+        "name": "trynuoclanh",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000",
+        "userId": "90f1",
+        "isDefault": true
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "c1ad",
+      "userId": "90f1",
+      "items": [
+        {
+          "productId": "3",
+          "name": "Ceramic Desk Organizer",
+          "quantity": 1,
+          "price": 280000
+        }
+      ],
+      "total": 280000,
+      "status": "completed",
+      "date": "2026-01-18T22:39:17.478Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "id": "207674b6-9161-48f9-bef0-c5ddb3f8d466",
+        "name": "hehe git",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000",
+        "isDefault": true,
+        "userId": "90f1"
+      },
+      "paymentMethod": "cod"
     }
   ],
   "carts": [
@@ -802,22 +1196,13 @@
       "quantity": 1
     },
     {
-      "id": "xE2m8j",
-      "userId": "u2",
-      "productId": "2",
-      "name": "Solid Brass Fountain Pen",
-      "price": 450000,
-      "image": "https://images.unsplash.com/photo-1616627454715-b31f9b1fadb9?auto=format&fit=crop&q=80&w=800",
+      "id": "x0Ye3v",
+      "userId": "90f1",
+      "productId": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 120000,
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
       "quantity": 1
-    },
-    {
-      "id": "VLuBxp",
-      "userId": "u2",
-      "productId": "4",
-      "name": "Washi Tape Set - Earth Tones",
-      "price": 85000,
-      "image": "https://i.etsystatic.com/10468543/r/il/935e63/7052164274/il_800x800.7052164274_r7px.jpg",
-      "quantity": 5
     }
   ],
   "voucherGifts": []

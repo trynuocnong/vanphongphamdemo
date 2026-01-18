@@ -27,3 +27,23 @@ export async function deleteVoucher(id: string) {
   const res = await fetch(`${API_URL}/vouchers/${id}`, { method: "DELETE" });
   return res.ok;
 }
+
+// ---------- REDEEM ----------
+export async function collectVoucher(userId: string, voucherId: string, updatedData: any) {
+  const res = await fetch(`${API_URL}/users/${userId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedData),
+  });
+  return res.ok;
+}
+
+export async function redeemGiftCode(code: string) {
+  const res = await fetch(`${API_URL}/voucherGifts?code=${code}`);
+  return res.json();
+}
+
+export async function deleteGiftCode(id: string) {
+  const res = await fetch(`${API_URL}/voucherGifts/${id}`, { method: "DELETE" });
+  return res.ok;
+}
