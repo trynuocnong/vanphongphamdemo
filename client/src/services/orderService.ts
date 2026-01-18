@@ -50,3 +50,18 @@ export async function updateOrderStatus(orderId: string, status: string) {
   });
   return res.json();
 }
+export const hasPurchasedProduct = async (
+  userId: string,
+  productId: string
+): Promise<boolean> => {
+  const res = await fetch(
+    `http://localhost:3001/orders?userId=${userId}&status=completed`
+  );
+  const orders = await res.json();
+
+  return orders.some((order: any) =>
+    order.items?.some(
+      (item: any) => item.productId === productId
+    )
+  );
+};

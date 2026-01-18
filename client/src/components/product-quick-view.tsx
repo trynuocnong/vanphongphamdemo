@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/lib/store";
-import type { Product } from "@/lib/mockData";
+import { Product } from "@/types";
 import { ShoppingCart, X, ArrowRight, Minus, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";

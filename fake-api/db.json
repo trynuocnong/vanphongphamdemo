@@ -236,20 +236,30 @@
       "allowOffers": true,
       "autoAcceptPrice": 140000,
       "autoRejectPrice": 100000,
-      "feedbacks": [
+      "reviews": [
         {
           "id": "f1",
-          "user": "Alice",
+          "userId": "u01",
+          "userName": "Alice",
           "rating": 5,
           "comment": "Amazing paper quality!",
           "date": "2023-10-15"
         },
         {
           "id": "f2",
-          "user": "Bob",
+          "userId": "u02",
+          "userName": "Bob",
           "rating": 4,
           "comment": "Cover feels great.",
           "date": "2023-10-10"
+        },
+        {
+          "userId": "u2",
+          "userName": "Riven",
+          "rating": 5,
+          "comment": "nice ",
+          "id": "5c3df2cb-f9c8-44c4-adcc-4db9e15b232f",
+          "createdAt": "2026-01-18T18:42:15.761Z"
         }
       ],
       "createdAt": "2023-10-01T10:00:00Z"
@@ -285,7 +295,17 @@
       ],
       "allowOffers": false,
       "feedbacks": [],
-      "createdAt": "2023-08-20T10:00:00Z"
+      "createdAt": "2023-08-20T10:00:00Z",
+      "reviews": [
+        {
+          "userId": "u2",
+          "userName": "Riven",
+          "rating": 5,
+          "comment": "nice",
+          "id": "a95b7448-d48a-4360-ad0c-c8d78f153574",
+          "createdAt": "2026-01-18T18:56:24.630Z"
+        }
+      ]
     },
     {
       "id": "4",
@@ -735,6 +755,33 @@
         "isDefault": false
       },
       "paymentMethod": "credit_card"
+    },
+    {
+      "id": "ba5f",
+      "userId": "u2",
+      "items": [
+        {
+          "productId": "3",
+          "name": "Ceramic Desk Organizer",
+          "quantity": 1,
+          "price": 280000
+        }
+      ],
+      "total": 280000,
+      "status": "completed",
+      "date": "2026-01-18T16:06:33.639Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "id": "addr3",
+        "userId": "u2",
+        "name": "Riven",
+        "phone": "0901234567",
+        "address": "123 Le Loi, District 1, HCMC",
+        "city": "Hồ Chí Minh",
+        "postalCode": "700000",
+        "isDefault": false
+      },
+      "paymentMethod": "cod"
     }
   ],
   "carts": [
@@ -802,24 +849,14 @@
       "quantity": 1
     },
     {
-      "id": "xE2m8j",
+      "id": "DQsNKR",
       "userId": "u2",
-      "productId": "2",
-      "name": "Solid Brass Fountain Pen",
-      "price": 450000,
-      "image": "https://images.unsplash.com/photo-1616627454715-b31f9b1fadb9?auto=format&fit=crop&q=80&w=800",
+      "productId": "3",
+      "name": "Ceramic Desk Organizer",
+      "price": 280000,
+      "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
       "quantity": 1
-    },
-    {
-      "id": "VLuBxp",
-      "userId": "u2",
-      "productId": "4",
-      "name": "Washi Tape Set - Earth Tones",
-      "price": 85000,
-      "image": "https://i.etsystatic.com/10468543/r/il/935e63/7052164274/il_800x800.7052164274_r7px.jpg",
-      "quantity": 5
     }
   ],
   "voucherGifts": []
 }
-  

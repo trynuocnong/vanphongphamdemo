@@ -45,27 +45,40 @@ export async function deleteProduct(id: string) {
 }
 export const addReviewToProduct = async (
   productId: string,
-  review: Omit<Review, 'id' | 'createdAt'>
+  review: Omit<Review, "id" | "createdAt">
 ): Promise<Product> => {
+  // 1️⃣ Lấy product hiện tại
   const productRes = await fetch(`${API_URL}/products/${productId}`);
-  const product = await productRes.json();
+  if (!productRes.ok) {
+    throw new Error("Product not found");
+  }
 
+  const product: Product = await productRes.json();
+
+  // 2️⃣ Tạo review mới
   const newReview: Review = {
     ...review,
     id: crypto.randomUUID(),
-    createdAt: Date.now(),
+    createdAt: new Date().toISOString(), // ✅ chuẩn để format date
   };
 
-  const updatedProduct: Product = {
-    ...product,
-    reviews: [...(product.reviews ?? []), newReview],
-  };
+  // 3️⃣ Gộp review (an toàn khi chưa có reviews)
+  const updatedReviews: Review[] = [
+    ...(product.reviews ?? []),
+    newReview,
+  ];
 
+  // 4️⃣ PATCH chỉ field reviews
   const res = await fetch(`${API_URL}/products/${productId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ reviews: updatedProduct.reviews })
+    body: JSON.stringify({ reviews: updatedReviews }),
   });
+
+  if (!res.ok) {
+    throw new Error("Failed to add review");
+  }
 
   return res.json();
 };
+

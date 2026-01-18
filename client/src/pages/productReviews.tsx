@@ -19,3 +19,4 @@ export default function ProductReviews({ reviews }: { reviews?: Review[] }) {
     </ul>
   );
 }
+

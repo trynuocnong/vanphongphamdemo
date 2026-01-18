@@ -32,7 +32,9 @@ import { cn } from "@/lib/utils";
 import { getProducts } from "@/services/productService";
 import { getOffers, createOffer } from "@/services/offerService";
 import { useStore } from "@/lib/store";
-import { Review } from "@/types"; 
+import { Product, Review } from '../types';
+import { addReviewToProduct } from "@/services/productService";
+import { hasPurchasedProduct } from "@/services/orderService";
 export default function ProductDetail() {
   const { id } = useParams();
   const { user, addToCart: addToCartStore } = useStore();
@@ -46,8 +48,19 @@ export default function ProductDetail() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [quantity, setQuantity] = useState(1);
+const [showReviewForm, setShowReviewForm] = useState(false);
+const [rating, setRating] = useState<number>(0);
+const [comment, setComment] = useState("");
+const [canReview, setCanReview] = useState(false);
 
   const userId = user?.id;
+  // Check if user can review the product
+   const product = products.find((p) => p.id === id);
+useEffect(() => {
+  if (!user || !product) return;
+
+  hasPurchasedProduct(user.id, product.id).then(setCanReview);
+}, [user, product]);
 
   // Fetch data khi component mount
   useEffect(() => {
@@ -64,11 +77,39 @@ export default function ProductDetail() {
     });
   }, [carouselApi]);
 
-  const product = products.find((p) => p.id === id);
 
   if (!product || product.isDeleted) {
     return <div className="p-10 text-center">Product not found</div>;
   }
+const handleAddReview = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!user) {
+    alert("Please login to write a review");
+    return;
+  }
+
+  if (!canReview) {
+    alert("Only customers who purchased this product can review");
+    return;
+  }
+
+  const updatedProduct = await addReviewToProduct(product.id, {
+    userId: user.id,
+    userName: user.name,
+    rating,
+    comment,
+  });
+
+  setProducts((prev) =>
+    prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+  );
+
+  setShowReviewForm(false);
+  setRating(0);
+  setComment("");
+};
+
 
   // --- LOGIC TÍNH TOÁN GIÁ & OFFER (Theo File 1) ---
   const acceptedOffer = userId
@@ -395,16 +436,75 @@ export default function ProductDetail() {
       </div>
 
       {/* === SECTION 3: REVIEWS === */}
-      <div className="mt-20 max-w-3xl">
-  <h2 className="text-2xl font-serif font-bold mb-6">
+<div className="mt-20 max-w-3xl">
+  <h2 className="mb-6 text-2xl font-serif font-bold">
     Customer Reviews
   </h2>
 
+  {/* BUTTON ADD REVIEW */}
+  {canReview && (
+  <button
+    onClick={() => setShowReviewForm(true)}
+    className="mb-6 rounded bg-black px-4 py-2 text-sm text-white hover:bg-gray-800"
+  >
+    Write a review
+  </button>
+)}
+{showReviewForm && (
+  <form
+    onSubmit={handleAddReview}
+    className="mb-8 space-y-4 rounded border p-4"
+  >
+    {/* Rating */}
+    <div>
+      <Label>Rating</Label>
+      <select
+        value={rating}
+        onChange={(e) => setRating(Number(e.target.value))}
+        className="w-full rounded border p-2"
+        required
+      >
+        <option value={0}>Select rating</option>
+        <option value={5}>5 ⭐</option>
+        <option value={4}>4 ⭐</option>
+        <option value={3}>3 ⭐</option>
+        <option value={2}>2 ⭐</option>
+        <option value={1}>1 ⭐</option>
+      </select>
+    </div>
+
+    {/* Comment */}
+    <div>
+      <Label>Comment</Label>
+      <Textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Write your review..."
+        required
+      />
+    </div>
+
+    <div className="flex gap-2">
+      <Button type="submit">Submit</Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setShowReviewForm(false)}
+      >
+        Cancel
+      </Button>
+    </div>
+  </form>
+)}
   <div className="space-y-6">
-    {product.reviews && product.reviews.length > 0 ? (
+    {product?.reviews && product.reviews.length > 0 ? (
       product.reviews.map((review: Review) => (
-        <div key={review.id} className="border-b pb-6">
-          <div className="flex items-center justify-between mb-2">
+        <div
+          key={review.id}
+          className="border-b border-gray-200 pb-6"
+        >
+          {/* Header */}
+          <div className="mb-2 flex items-center justify-between">
             <span className="font-semibold">
               {review.userName}
             </span>
@@ -413,31 +513,35 @@ export default function ProductDetail() {
             </span>
           </div>
 
-          <div className="flex text-yellow-500 mb-2">
-            {[...Array(5)].map((_, i) => (
+          {/* Rating */}
+          <div className="mb-2 flex gap-1">
+            {[...Array(5)].map((_, index) => (
               <Star
-                key={i}
-                className={`w-4 h-4 ${
-                  i < review.rating
-                    ? "fill-current"
-                    : "text-muted"
+                key={index}
+                className={`h-4 w-4 ${
+                  index < review.rating
+                    ? "fill-yellow-500 text-yellow-500"
+                    : "text-gray-300"
                 }`}
               />
             ))}
           </div>
 
-          <p className="text-muted-foreground">
+          {/* Comment */}
+          <p className="text-sm text-muted-foreground">
             {review.comment}
           </p>
         </div>
       ))
     ) : (
-      <p className="text-muted-foreground italic">
+      <p className="italic text-muted-foreground">
         No reviews yet.
       </p>
     )}
   </div>
 </div>
+
+
 
 
       {/* === SECTION 4: RELATED PRODUCTS === */}
