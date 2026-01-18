@@ -710,6 +710,9 @@
         "postalCode": "123111"
       },
       "paymentMethod": "momo"
+    }
+  ],
+  "carts": [
     },
     {
       "id": "1c1c",
@@ -831,6 +834,34 @@
       "name": "Ceramic Desk Organizer",
       "price": 280000,
       "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
+      "quantity": 3
+    },
+    {
+      "id": "eCbmZA",
+      "userId": "u2",
+      "productId": "1",
+      "name": "Premium Linen Notebook",
+      "price": 150000,
+      "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
+      "quantity": 3
+    },
+    {
+      "id": "RfKY0c",
+      "userId": "u2",
+      "productId": "5",
+      "name": "Minimalist Weekly Planner",
+      "price": 20000,
+      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+      "quantity": 1
+    },
+    {
+      "id": "n8pMau",
+      "userId": "u2",
+      "productId": "4",
+      "name": "Washi Tape Set - Earth Tones",
+      "price": 85000,
+      "image": "https://i.etsystatic.com/10468543/r/il/935e63/7052164274/il_800x800.7052164274_r7px.jpg",
+      "quantity": 1
       "quantity": 2
     }
   ]
