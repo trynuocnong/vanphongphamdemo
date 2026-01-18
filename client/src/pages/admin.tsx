@@ -370,9 +370,18 @@ function ProductsTab({ categories }: any) {
                   </div>
                   <div className="space-y-2">
                     <Label>Category</Label>
-                    <select name="categoryId" className="w-full h-10 px-3 rounded-md border" defaultValue={editProduct?.categoryId}>
-                      {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+<select
+  name="categoryId"
+  className="w-full h-10 px-3 rounded-md border"
+  defaultValue={editProduct?.categoryId || "c1"}
+  required
+>
+  <option value="c1">Notebooks</option>
+  <option value="c2">Writing</option>
+  <option value="c3">Desk</option>
+  <option value="c4">Paper</option>
+</select>
+
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

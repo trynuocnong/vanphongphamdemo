@@ -60,26 +60,27 @@ export default function ProductCard({
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
 
-                        {/* Badges */}
-                        <div className="absolute top-3 left-3 flex flex-col gap-2">
-                            {showNewBadge && (
-                                <Badge className="bg-primary">New</Badge>
-                            )}
-                            {(product.isSale || product.originalPrice) && (
-                                <Badge variant="destructive">Sale</Badge>
-                            )}
-                            {showRanking && ranking && ranking <= 3 && (
-                                <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-                                    #{ranking} Bestseller
-                                </Badge>
-                            )}
-                            {product.stock <= 0 && (
-                                <Badge variant="secondary" className="bg-black/70 text-white">Out of Stock</Badge>
-                            )}
-                            {product.stock > 0 && product.stock < 10 && (
-                                <Badge className="bg-orange-500">Only {product.stock} left</Badge>
-                            )}
-                        </div>
+{/* Badges */}
+<div className="absolute top-3 left-3 flex flex-col gap-2">
+  {product.isNew && showNewBadge && <Badge className="bg-primary">New</Badge>}
+
+  {(product.isSale || (product.originalPrice && product.originalPrice > product.price)) && (
+    <Badge variant="destructive">
+      Sale{" "}
+      {product.originalPrice && product.originalPrice > product.price
+        ? `-${Math.round((1 - product.price / product.originalPrice) * 100)}%`
+        : ""}
+    </Badge>
+  )}
+
+  {showRanking && ranking && ranking <= 3 && (
+    <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+      #{ranking} Bestseller
+    </Badge>
+  )}
+</div>
+
+
 
                         {/* Wishlist Heart - Top Right */}
                         <motion.div
@@ -134,22 +135,23 @@ export default function ProductCard({
                             {product.name}
                         </h3>
                         <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                                {product.originalPrice && (
-                                    <span className="text-xs text-muted-foreground line-through">
-                                        ₫{product.originalPrice.toLocaleString()}
-                                    </span>
-                                )}
-                                <span className="text-lg font-bold text-primary">
-                                    ₫{product.price.toLocaleString()}
-                                </span>
-                            </div>
-                            {product.sold > 0 && (
-                                <span className="text-xs text-muted-foreground">
-                                    {product.sold} sold
-                                </span>
-                            )}
-                        </div>
+  <div className="flex flex-col">
+    {(product.isSale || (product.originalPrice && product.originalPrice > product.price)) && (
+      <span className="text-xs text-muted-foreground line-through">
+        ₫{product.originalPrice?.toLocaleString()}
+      </span>
+    )}
+    <span className="text-lg font-bold text-primary">
+      ₫{product.price.toLocaleString()}
+    </span>
+  </div>
+  {product.sold > 0 && (
+    <span className="text-xs text-muted-foreground">
+      {product.sold} sold
+    </span>
+  )}
+</div>
+
                     </CardContent>
                 </Card>
             </motion.div>

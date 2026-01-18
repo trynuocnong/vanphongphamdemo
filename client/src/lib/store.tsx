@@ -119,7 +119,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = useState<User[]>([]);
   const [authReady, setAuthReady] = useState(false);
 
-
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -136,22 +135,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (saved) setUser(JSON.parse(saved));
   }, []);
 
+  /* ===================== INIT CATEGORIES (Fake static data) ===================== */
+  useEffect(() => {
+    setCategories([
+      { id: "c1", name: "Notebooks" },
+      { id: "c2", name: "Writing" },
+      { id: "c3", name: "Desk" },
+      { id: "c4", name: "Paper" },
+    ]);
+  }, []);
+
   /* ===================== REFETCH ALL ===================== */
   const refetchAll = async () => {
     try {
-      const [
-        productsData,
-        usersData,
-        ordersData,
-        offersData,
-        vouchersData,
-      ] = await Promise.all([
-        getProducts(),
-        getUsers(),
-        getOrders(),
-        getOffers(),
-        getVouchers(),
-      ]);
+      const [productsData, usersData, ordersData, offersData, vouchersData] =
+        await Promise.all([
+          getProducts(),
+          getUsers(),
+          getOrders(),
+          getOffers(),
+          getVouchers(),
+        ]);
 
       setProducts(productsData);
       setUsers(usersData);
@@ -159,21 +163,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setOffers(offersData);
       setVouchers(vouchersData);
 
-      // ✅ SYNC USER TỪ API
+      // ✅ Sync user state
       setUser((prev: User | null) => {
         if (!prev) return null;
         const fresh = usersData.find((u: User) => u.id === prev.id);
         if (!fresh) return null;
-
         localStorage.setItem("auth_user", JSON.stringify(fresh));
         return fresh;
       });
     } finally {
-      // ✅ AUTH READY CHỈ SET SAU KHI DATA ĐÃ LOAD
       setAuthReady(true);
     }
   };
-
 
   useEffect(() => {
     refetchAll();
@@ -190,7 +191,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   /* ===================== AUTH ===================== */
   const login = (email: string, role: "user" | "admin") => {
-    const found = users.find(u => u.email === email && u.role === role);
+    const found = users.find((u) => u.email === email && u.role === role);
     if (!found) return false;
     if (found.isBlocked) {
       toast.error("Account blocked");
@@ -213,8 +214,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setCart([]);
     localStorage.removeItem("auth_user");
   };
+
   const updateUser = async (id: string, data: Partial<User>) => {
-    const current = users.find(u => u.id === id);
+    const current = users.find((u) => u.id === id);
     if (!current) return;
 
     const updatedUser: User = {
@@ -223,22 +225,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
 
     await updateUserAPI(id, updatedUser);
-
-    // update store
-    setUsers(prev => prev.map(u => (u.id === user.id ? updatedUser : u)));
-
+    setUsers((prev) => prev.map((u) => (u.id === id ? updatedUser : u)));
     setUser(updatedUser);
     localStorage.setItem("auth_user", JSON.stringify(updatedUser));
-    // sync auth user
-    if (user?.id === id) {
-      setUser(updatedUser);
-      localStorage.setItem("auth_user", JSON.stringify(updatedUser));
-    }
 
     toast.success("User updated");
   };
 
-  /* ===================== CART (SAFE) ===================== */
+  /* ===================== CART ===================== */
   useEffect(() => {
     if (!user) {
       setCart([]);
@@ -247,10 +241,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     const loadCart = async () => {
       const items = await getCartItems(user.id);
-
       const safeCart = items
         .map((i: any) => {
-          const product = products.find(p => p.id === i.productId);
+          const product = products.find((p) => p.id === i.productId);
           if (!product) return null;
           return {
             productId: i.productId,
@@ -260,7 +253,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           };
         })
         .filter(Boolean) as CartItem[];
-
       setCart(safeCart);
     };
 
@@ -271,7 +263,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!user) return toast.error("Login first");
     await addToCartAPI(user.id, product, quantity, priceOverride);
     await refetchAll();
-    setIsCartOpen(true); // Auto-open cart sidebar
+    setIsCartOpen(true);
     toast.success(`Added ${product.name} to cart`);
   };
 
@@ -295,17 +287,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const checkout = async (data: any) => {
     if (!user || cart.length === 0) return;
 
-    const subtotal = cart.reduce(
-      (s, i) => s + i.priceUsed * i.quantity,
-      0
-    );
-
-    const voucher = vouchers.find(v => v.id === appliedVoucherId);
+    const subtotal = cart.reduce((s, i) => s + i.priceUsed * i.quantity, 0);
+    const voucher = vouchers.find((v) => v.id === appliedVoucherId);
     const discount = voucher ? voucher.discount : 0;
 
     const order: Order = {
       userId: user.id,
-      items: cart.map(i => ({
+      items: cart.map((i) => ({
         productId: i.productId,
         name: i.product.name,
         quantity: i.quantity,
@@ -322,7 +310,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     await createOrder(order);
     await clearUserCart(user.id);
-
     setAppliedVoucherId(undefined);
     await refetchAll();
     setCart([]);
@@ -330,13 +317,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toast.success("Thanh toán thành công");
   };
 
-  /* ===================== REDEEM VOUCHER ===================== */
+  /* ===================== VOUCHER REDEEM ===================== */
   const redeemVoucher = async (voucherId: string) => {
     if (!user) return;
-
-    const voucher = vouchers.find(v => v.id === voucherId);
+    const voucher = vouchers.find((v) => v.id === voucherId);
     if (!voucher) return;
-
     if (user.points < voucher.pointCost) {
       toast.error("Không đủ điểm");
       return;
@@ -349,7 +334,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
 
     await updateUserAPI(user.id, updatedUser);
-
     setUser(updatedUser);
     localStorage.setItem("auth_user", JSON.stringify(updatedUser));
     await refetchAll();
@@ -368,14 +352,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await respondToOfferAPI(offerId, status);
     await refetchAll();
   };
-  const addFeedback = async (
-    productId: string,
-    rating: number,
-    comment: string
-  ) => {
+
+  const addFeedback = async (productId: string, rating: number, comment: string) => {
     if (!user) return;
 
-    const product = products.find(p => p.id === productId);
+    const product = products.find((p) => p.id === productId);
     if (!product) return;
 
     const feedback = {
@@ -396,7 +377,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     toast.success("Review submitted");
   };
-
 
   /* ===================== PRODUCTS ===================== */
   const addProduct = async (data: any) => {
@@ -427,21 +407,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const deleteVoucher = async (id: string) => {
     await deleteVoucherAPI(id);
-
-    //CLEAN voucher khỏi user
-    const affectedUsers = users.filter(u => u.vouchers?.includes(id));
-
-    for (const u of affectedUsers) {
-      await updateUserAPI(u.id, {
-        ...u,
-        vouchers: u.vouchers.filter((v: string) => v !== id),
-      });
-    }
-
     await refetchAll();
     toast.success("Voucher deleted");
   };
-
 
   const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
     await updateOrderStatusAPI(orderId, status);
@@ -457,29 +425,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     try {
       if (wishlist.includes(productId)) {
-        // Remove from wishlist
         await removeFromWishlist(user.id, productId);
         await refetchAll();
         toast.success("Removed from wishlist");
       } else {
-        // Add to wishlist
         await addToWishlist(user.id, productId);
         await refetchAll();
         toast.success("Added to wishlist");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update wishlist");
     }
   };
 
-  const isInWishlist = (productId: string) => {
-    return wishlist.includes(productId);
-  };
+  const isInWishlist = (productId: string) => wishlist.includes(productId);
 
   /* ===================== CART SIDEBAR ===================== */
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
-  const toggleCart = () => setIsCartOpen(prev => !prev);
+  const toggleCart = () => setIsCartOpen((prev) => !prev);
 
   return (
     <StoreContext.Provider

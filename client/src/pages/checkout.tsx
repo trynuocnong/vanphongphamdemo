@@ -40,6 +40,34 @@ export default function Checkout() {
     const [currentStep, setCurrentStep] = useState(1);
     const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>("cod");
+const [addresses, setAddresses] = useState<any[]>([]);
+const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+
+// Lấy danh sách địa chỉ của user từ fake API
+useEffect(() => {
+  if (user?.id) {
+    fetch(`http://localhost:3001/addresses?userId=${user.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setAddresses(data);
+
+        // ✅ Tự động chọn địa chỉ mặc định (nếu có)
+        const defaultAddr = data.find((a: any) => a.isDefault);
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+          setShippingData({
+            name: defaultAddr.name,
+            phone: defaultAddr.phone,
+            address: defaultAddr.address,
+            city: defaultAddr.city,
+            postalCode: defaultAddr.postalCode,
+          });
+        }
+      })
+      .catch((err) => console.error("Failed to load addresses:", err));
+  }
+}, [user]);
+
 
     // Shipping form
     const {
@@ -92,10 +120,16 @@ export default function Checkout() {
     const voucherDiscount = appliedVoucher ? appliedVoucher.discount : 0;
     const total = Math.max(0, subtotal + shippingFee - voucherDiscount);
 
-    const onShippingSubmit = (data: ShippingFormData) => {
-        setShippingData(data);
-        setCurrentStep(2);
-    };
+const onShippingSubmit = (data: ShippingFormData) => {
+  if (selectedAddressId) {
+    const selected = addresses.find(a => a.id === selectedAddressId);
+    if (selected) setShippingData(selected);
+  } else {
+    setShippingData(data);
+  }
+  setCurrentStep(2);
+};
+
 
     const onPaymentSubmit = () => {
         setCurrentStep(3);
@@ -120,87 +154,89 @@ export default function Checkout() {
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Step 1: Shipping Information */}
-                    {currentStep === 1 && (
-                        <Card>
-                            <CardContent className="p-6">
-                                <h2 className="text-2xl font-serif font-bold mb-6">Shipping Information</h2>
-                                <form onSubmit={handleSubmitShipping(onShippingSubmit)} className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="name">Full Name *</Label>
-                                        <Input
-                                            id="name"
-                                            {...registerShipping("name")}
-                                            placeholder="Nguyen Van A"
-                                        />
-                                        {shippingErrors.name && (
-                                            <p className="text-sm text-destructive mt-1">{shippingErrors.name.message}</p>
-                                        )}
-                                    </div>
+{currentStep === 1 && (
+  <Card>
+    <CardContent className="p-6 space-y-6">
+      <h2 className="text-2xl font-serif font-bold">Shipping Information</h2>
 
-                                    <div>
-                                        <Label htmlFor="phone">Phone Number *</Label>
-                                        <Input
-                                            id="phone"
-                                            {...registerShipping("phone")}
-                                            placeholder="0901234567"
-                                        />
-                                        {shippingErrors.phone && (
-                                            <p className="text-sm text-destructive mt-1">{shippingErrors.phone.message}</p>
-                                        )}
-                                    </div>
+      {/* Danh sách địa chỉ có sẵn */}
+      {addresses.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">Choose a saved address:</p>
+          <div className="grid gap-3">
+            {addresses.map((addr) => (
+              <div
+                key={addr.id}
+                onClick={() => {
+                  setSelectedAddressId(addr.id);
+                  setShippingData({
+                    name: addr.name,
+                    phone: addr.phone,
+                    address: addr.address,
+                    city: addr.city,
+                    postalCode: addr.postalCode,
+                  });
+                }}
+                className={`p-4 border rounded-md cursor-pointer transition-all ${
+                  selectedAddressId === addr.id
+                    ? "border-primary bg-primary/10"
+                    : "border-muted hover:bg-muted/30"
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-medium">{addr.name}</div>
+                    <div className="text-sm text-muted-foreground">{addr.phone}</div>
+                    <div className="text-sm">
+                      {addr.address}, {addr.city}, {addr.postalCode}
+                    </div>
+                  </div>
+                  {addr.isDefault && (
+                    <span className="text-xs font-semibold text-primary">Default</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="text-muted-foreground text-center py-10">
+          You have no saved addresses.  
+          <br />
+          <span className="text-sm">
+            Please add one in your <strong>Profile → Addresses</strong> page.
+          </span>
+        </div>
+      )}
 
-                                    <div>
-                                        <Label htmlFor="address">Street Address *</Label>
-                                        <Input
-                                            id="address"
-                                            {...registerShipping("address")}
-                                            placeholder="123 Le Loi Street"
-                                        />
-                                        {shippingErrors.address && (
-                                            <p className="text-sm text-destructive mt-1">{shippingErrors.address.message}</p>
-                                        )}
-                                    </div>
+      {/* Buttons */}
+      <div className="flex justify-between pt-4">
+        <Button type="button" variant="outline" onClick={() => navigate("/cart")}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Cart
+        </Button>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <Label htmlFor="city">City *</Label>
-                                            <Input
-                                                id="city"
-                                                {...registerShipping("city")}
-                                                placeholder="Ho Chi Minh City"
-                                            />
-                                            {shippingErrors.city && (
-                                                <p className="text-sm text-destructive mt-1">{shippingErrors.city.message}</p>
-                                            )}
-                                        </div>
+        <Button
+          type="button"
+          disabled={!selectedAddressId}
+          onClick={() => {
+            if (selectedAddressId) {
+              const selected = addresses.find((a) => a.id === selectedAddressId);
+              if (selected) {
+                setShippingData(selected);
+                setCurrentStep(2);
+              }
+            }
+          }}
+        >
+          Continue to Payment
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+)}
 
-                                        <div>
-                                            <Label htmlFor="postalCode">Postal Code *</Label>
-                                            <Input
-                                                id="postalCode"
-                                                {...registerShipping("postalCode")}
-                                                placeholder="700000"
-                                            />
-                                            {shippingErrors.postalCode && (
-                                                <p className="text-sm text-destructive mt-1">{shippingErrors.postalCode.message}</p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-between pt-4">
-                                        <Button type="button" variant="outline" onClick={() => navigate("/cart")}>
-                                            <ArrowLeft className="w-4 h-4 mr-2" />
-                                            Back to Cart
-                                        </Button>
-                                        <Button type="submit">
-                                            Continue to Payment
-                                            <ArrowRight className="w-4 h-4 ml-2" />
-                                        </Button>
-                                    </div>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    )}
 
                     {/* Step 2: Payment Method */}
                     {currentStep === 2 && (
