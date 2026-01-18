@@ -15,9 +15,9 @@ import {
 import { Star, Truck, ShieldCheck, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { isAfter, parseISO, addHours } from "date-fns";
+import ProductCard from "@/components/product-card";
 import {
   Carousel,
   CarouselContent,
@@ -434,30 +434,10 @@ export default function ProductDetail() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {relatedProducts.map((p) => (
-              <Card
+              <ProductCard
                 key={p.id}
-                className="group border-none shadow-none bg-transparent"
-              >
-                <CardContent className="p-0 relative aspect-square bg-muted mb-4 overflow-hidden rounded-md">
-                  <Link href={`/product/${p.id}`}>
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </Link>
-                </CardContent>
-                <CardFooter className="p-0 block">
-                  <Link href={`/product/${p.id}`}>
-                    <h3 className="font-medium text-lg leading-none mb-1 group-hover:text-primary transition-colors">
-                      {p.name}
-                    </h3>
-                  </Link>
-                  <p className="font-semibold">
-                    {p.price.toLocaleString()}đ
-                  </p>
-                </CardFooter>
-              </Card>
+                product={p}
+              />
             ))}
           </div>
         </div>

@@ -11,22 +11,49 @@
         "v2",
         "v3"
       ],
-      "isBlocked": false
+      "isBlocked": false,
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200",
+      "bio": "Administrator and stationery enthusiast",
+      "phone": "0987823027",
+      "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+      "city": "Bình Dương",
+      "postalCode": "75000",
+      "memberSince": "2023-01-15T10:00:00Z",
+      "twoFactorEnabled": true,
+      "emailNotifications": true,
+      "smsNotifications": false
     },
     {
       "id": "u2",
-      "name": "Tu",
+      "name": "Riven",
       "email": "user@example.com",
-      "password": "123444",
+      "password": "666666",
       "role": "user",
       "points": 0,
       "vouchers": [
         "v1",
         "v2",
-        "7c745809-cb0c-4b51-adc8-f2a505a4b9cb"
+        "7c745809-cb0c-4b51-adc8-f2a505a4b9cb",
+        "v3",
+        "9eb51046-39ff-4181-90e7-134d98cd7fdc",
+        "80738571-3ca7-4f4f-96e6-7afae484bfd9",
+        "6c4a8a45-f89d-4e53-9dde-75bd34db9624"
       ],
       "phone": "0901234567",
-      "address": "123 Le Loi, District 1, HCMC"
+      "address": "123 Le Loi, District 1, HCMC",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
+      "bio": "Love beautiful notebooks and quality pens",
+      "city": "Hồ Chí Minh",
+      "postalCode": "700000",
+      "memberSince": "2024-05-20T10:00:00Z",
+      "twoFactorEnabled": false,
+      "emailNotifications": true,
+      "smsNotifications": true,
+      "wishlist": [
+        "4",
+        "1",
+        "5"
+      ]
     },
     {
       "id": "5273",
@@ -34,8 +61,182 @@
       "email": "tri@example.com",
       "password": "123",
       "role": "user",
-      "isBlocked": true
-    }  ],
+      "isBlocked": false,
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
+      "bio": "",
+      "phone": "",
+      "address": "",
+      "city": "",
+      "postalCode": "",
+      "memberSince": "2025-08-10T10:00:00Z",
+      "points": 0,
+      "vouchers": [],
+      "twoFactorEnabled": false,
+      "emailNotifications": false,
+      "smsNotifications": false
+    },
+    {
+      "id": "bb4b",
+      "name": "Tu",
+      "email": "tu@example.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": false
+    },
+    {
+      "id": "1378",
+      "name": "TuN",
+      "email": "tunguyen150803@gmail.com",
+      "password": "123",
+      "role": "user",
+      "isBlocked": false
+    },
+    {
+      "id": "66df",
+      "name": "TriN",
+      "email": "t@example.com",
+      "password": "123",
+      "role": "user",
+      "phone": "0977587418",
+      "bio": "Heheboi",
+      "wishlist": [
+        "1"
+      ],
+      "vouchers": [
+        "v1"
+      ]
+    },
+    {
+      "id": "76c2",
+      "name": "Huy",
+      "email": "h@example.com",
+      "password": "123",
+      "role": "user"
+    },
+    {
+      "id": "a824",
+      "name": "Huy",
+      "email": "h@example.com",
+      "password": "123",
+      "role": "user"
+    },
+    {
+      "id": "31d0",
+      "name": "Huy",
+      "email": "h@example.com",
+      "password": "123",
+      "role": "user"
+    },
+    {
+      "id": "1295",
+      "name": "Huy",
+      "email": "h@example.com",
+      "password": "123",
+      "role": "user"
+    }
+  ],
+  "addresses": [
+    {
+      "id": "addr1",
+      "userId": "a1",
+      "name": "Tu Nguyen",
+      "phone": "0987823027",
+      "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+      "city": "Bình Dương",
+      "postalCode": "75000",
+      "isDefault": true
+    },
+    {
+      "id": "addr2",
+      "userId": "a1",
+      "name": "Tu Nguyen (Office)",
+      "phone": "0987823027",
+      "address": "123 Nguyen Thi Minh Khai, District 3",
+      "city": "Hồ Chí Minh",
+      "postalCode": "700000",
+      "isDefault": false
+    },
+    {
+      "id": "addr3",
+      "userId": "u2",
+      "name": "Tu",
+      "phone": "0901234567",
+      "address": "123 Le Loi, District 1, HCMC",
+      "city": "Hồ Chí Minh",
+      "postalCode": "700000",
+      "isDefault": true
+    }
+  ],
+  "loginHistory": [
+    {
+      "id": "log1",
+      "userId": "a1",
+      "device": "Chrome on MacOS",
+      "location": "Ho Chi Minh City, Vietnam",
+      "ipAddress": "113.161.xxx.xxx",
+      "timestamp": "2026-01-17T08:30:00Z",
+      "status": "success"
+    },
+    {
+      "id": "log2",
+      "userId": "a1",
+      "device": "Safari on iPhone",
+      "location": "Ho Chi Minh City, Vietnam",
+      "ipAddress": "113.161.xxx.xxx",
+      "timestamp": "2026-01-16T19:45:00Z",
+      "status": "success"
+    },
+    {
+      "id": "log3",
+      "userId": "a1",
+      "device": "Chrome on Windows",
+      "location": "Hanoi, Vietnam",
+      "ipAddress": "14.231.xxx.xxx",
+      "timestamp": "2026-01-15T14:20:00Z",
+      "status": "failed"
+    },
+    {
+      "id": "log4",
+      "userId": "u2",
+      "device": "Chrome on Android",
+      "location": "Ho Chi Minh City, Vietnam",
+      "ipAddress": "113.161.xxx.xxx",
+      "timestamp": "2026-01-17T07:15:00Z",
+      "status": "success"
+    }
+  ],
+  "activeSessions": [
+    {
+      "id": "sess1",
+      "userId": "a1",
+      "device": "Chrome on MacOS",
+      "location": "Ho Chi Minh City, Vietnam",
+      "ipAddress": "113.161.xxx.xxx",
+      "lastActive": "2026-01-17T10:45:00Z",
+      "createdAt": "2026-01-17T08:30:00Z",
+      "isCurrent": true
+    },
+    {
+      "id": "sess2",
+      "userId": "a1",
+      "device": "Safari on iPhone",
+      "location": "Ho Chi Minh City, Vietnam",
+      "ipAddress": "113.161.xxx.xxx",
+      "lastActive": "2026-01-17T09:20:00Z",
+      "createdAt": "2026-01-16T19:45:00Z",
+      "isCurrent": false
+    },
+    {
+      "id": "sess3",
+      "userId": "u2",
+      "device": "Chrome on Android",
+      "location": "Ho Chi Minh City, Vietnam",
+      "ipAddress": "113.161.xxx.xxx",
+      "lastActive": "2026-01-17T10:30:00Z",
+      "createdAt": "2026-01-17T07:15:00Z",
+      "isCurrent": true
+    }
+  ],
   "categories": [
     {
       "id": "c1",
@@ -132,9 +333,9 @@
       "sold": 450,
       "categoryId": "c4",
       "categoryName": "Paper",
-      "image": "https://images.unsplash.com/photo-1595248883856-745a34db248a?auto=format&fit=crop&q=80&w=800",
+      "image": "https://i.etsystatic.com/10468543/r/il/935e63/7052164274/il_800x800.7052164274_r7px.jpg",
       "images": [
-        "https://images.unsplash.com/photo-1595248883856-745a34db248a?auto=format&fit=crop&q=80&w=800"
+        "https://i.etsystatic.com/10468543/r/il/935e63/7052164274/il_800x800.7052164274_r7px.jpg"
       ],
       "allowOffers": true,
       "feedbacks": [],
@@ -188,15 +389,6 @@
       "detailedConditions": "Max discount 30,000 VND. Minimum order value 300,000 VND. Cannot be combined with other offers."
     },
     {
-      "code": "TRI2025",
-      "discount": 10000,
-      "minSpend": 20000,
-      "pointCost": 1000,
-      "description": "100%",
-      "detailedConditions": "Content Farming",
-      "id": "7c745809-cb0c-4b51-adc8-f2a505a4b9cb"
-    },
-    {
       "id": "9eb51046-39ff-4181-90e7-134d98cd7fdc",
       "code": "TU2026",
       "discount": 20000,
@@ -204,6 +396,33 @@
       "pointCost": 1000,
       "description": "100%",
       "detailedConditions": "Content Farming"
+    },
+    {
+      "code": "HUY2025",
+      "discount": 100000,
+      "minSpend": 20000,
+      "pointCost": 100,
+      "description": "100%",
+      "detailedConditions": "Content Farming",
+      "id": "80738571-3ca7-4f4f-96e6-7afae484bfd9"
+    },
+    {
+      "code": "TRI",
+      "discount": 100000,
+      "minSpend": 20000,
+      "pointCost": 100,
+      "description": "100%",
+      "detailedConditions": "Content Farming",
+      "id": "6c4a8a45-f89d-4e53-9dde-75bd34db9624"
+    },
+    {
+      "id": "0b9425f2-48fa-40e6-b6e6-d5f868c1ac1d",
+      "code": "STATIONERY",
+      "discount": 10000,
+      "minSpend": 50000,
+      "pointCost": 0,
+      "description": "",
+      "detailedConditions": ""
     }
   ],
   "offers": [
@@ -268,6 +487,26 @@
       "offerPrice": 20000,
       "message": "please",
       "acceptedAt": "2026-01-13T16:06:18.176Z"
+    },
+    {
+      "id": "d1fca05b-15a4-4991-b4a3-8682b5d58fc6",
+      "status": "accepted",
+      "createdAt": "2026-01-18T00:51:15.737Z",
+      "productId": "4",
+      "userId": "1378",
+      "offerPrice": 10000,
+      "message": "h",
+      "acceptedAt": "2026-01-18T00:52:08.174Z"
+    },
+    {
+      "id": "97fb6975-1305-4e43-947b-d63e8416f6c9",
+      "status": "accepted",
+      "createdAt": "2026-01-18T00:51:27.195Z",
+      "productId": "4",
+      "userId": "1378",
+      "offerPrice": 20000,
+      "message": "h",
+      "acceptedAt": "2026-01-18T00:52:08.924Z"
     }
   ],
   "orders": [
@@ -441,6 +680,102 @@
         "postalCode": "820000"
       },
       "paymentMethod": "cod"
+    },
+    {
+      "id": "124c",
+      "userId": "u2",
+      "items": [
+        {
+          "productId": "5",
+          "name": "Minimalist Weekly Planner",
+          "quantity": 4,
+          "price": 20000
+        },
+        {
+          "productId": "3",
+          "name": "Ceramic Desk Organizer",
+          "quantity": 7,
+          "price": 280000
+        }
+      ],
+      "total": 2040000,
+      "status": "cancelled",
+      "date": "2026-01-17T04:13:08.295Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "name": "Tu",
+        "phone": "0979574301",
+        "address": "123 Le Loi, District 1, HCMC",
+        "city": "asdasd",
+        "postalCode": "123111"
+      },
+      "paymentMethod": "momo"
+    },
+    {
+      "id": "1c1c",
+      "userId": "u2",
+      "items": [
+        {
+          "productId": "1",
+          "name": "Premium Linen Notebook",
+          "quantity": 4,
+          "price": 150000
+        },
+        {
+          "productId": "5",
+          "name": "Minimalist Weekly Planner",
+          "quantity": 4,
+          "price": 20000
+        },
+        {
+          "productId": "4",
+          "name": "Washi Tape Set - Earth Tones",
+          "quantity": 1,
+          "price": 85000
+        }
+      ],
+      "total": 765000,
+      "status": "completed",
+      "date": "2026-01-18T00:37:32.123Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "name": "Riven",
+        "phone": "0901234567",
+        "address": "123 Le Loi, District 1, HCMC",
+        "city": "Binh Duong",
+        "postalCode": "820000"
+      },
+      "paymentMethod": "cod"
+    },
+    {
+      "id": "8156",
+      "userId": "1378",
+      "items": [
+        {
+          "productId": "2",
+          "name": "Solid Brass Fountain Pen",
+          "quantity": 3,
+          "price": 450000
+        },
+        {
+          "productId": "4",
+          "name": "Washi Tape Set - Earth Tones",
+          "quantity": 1,
+          "price": 10000
+        }
+      ],
+      "total": 1360000,
+      "status": "completed",
+      "date": "2026-01-18T00:53:17.525Z",
+      "voucherDiscount": 0,
+      "shippingAddress": {
+        "name": "TuN",
+        "phone": "0987823027",
+        "address": "185/94/2C, KP Tay B, Tran Hung Dao, Di An",
+        "city": "Bình Dương",
+        "postalCode": "75000"
+      },
+      "paymentMethod": "cod"
     }
   ],
   "carts": [
@@ -477,7 +812,7 @@
       "productId": "4",
       "name": "Washi Tape Set - Earth Tones",
       "price": 85000,
-      "image": "https://images.unsplash.com/photo-1595248883856-745a34db248a?auto=format&fit=crop&q=80&w=800",
+      "image": "https://i.etsystatic.com/10468543/r/il/935e63/7052164274/il_800x800.7052164274_r7px.jpg",
       "quantity": 1
     },
     {
@@ -490,22 +825,13 @@
       "quantity": 5
     },
     {
-      "id": "L_70TR",
-      "userId": "u2",
-      "productId": "5",
-      "name": "Minimalist Weekly Planner",
-      "price": 20000,
-      "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
-      "quantity": 4
-    },
-    {
       "id": "CC7L-n",
       "userId": "a1",
       "productId": "3",
       "name": "Ceramic Desk Organizer",
       "price": 280000,
       "image": "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&q=80&w=800",
-      "quantity": 3
+      "quantity": 2
     }
   ]
 }
