@@ -47,3 +47,41 @@ export async function deleteUser(id: string) {
   const res = await fetch(`${API_URL}/users/${id}`, { method: "DELETE" });
   return res.ok;
 }
+
+// Wishlist management
+export async function addToWishlist(userId: string, productId: string) {
+  // Get current user
+  const userRes = await fetch(`${API_URL}/users/${userId}`);
+  const user = await userRes.json();
+
+  // Add product to wishlist if not already there
+  const wishlist = user.wishlist || [];
+  if (!wishlist.includes(productId)) {
+    wishlist.push(productId);
+  }
+
+  // Update user
+  const res = await fetch(`${API_URL}/users/${userId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ wishlist })
+  });
+  return res.json();
+}
+
+export async function removeFromWishlist(userId: string, productId: string) {
+  // Get current user
+  const userRes = await fetch(`${API_URL}/users/${userId}`);
+  const user = await userRes.json();
+
+  // Remove product from wishlist
+  const wishlist = (user.wishlist || []).filter((id: string) => id !== productId);
+
+  // Update user
+  const res = await fetch(`${API_URL}/users/${userId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ wishlist })
+  });
+  return res.json();
+}

@@ -13,6 +13,8 @@ import {
   getUsers,
   registerUser,
   updateUser as updateUserAPI,
+  addToWishlist,
+  removeFromWishlist,
 } from "@/services/userService";
 
 import {
@@ -61,7 +63,9 @@ interface StoreContextType {
   offers: Offer[];
   vouchers: Voucher[];
   appliedVoucherId?: string;
-  
+  wishlist: string[];
+  isCartOpen: boolean;
+
   updateUser: (id: string, data: Partial<User>) => Promise<void>;
   setAppliedVoucherId: (id?: string) => void;
 
@@ -92,11 +96,17 @@ interface StoreContextType {
   deleteVoucher: (id: string) => void;
 
   updateOrderStatus: (orderId: string, status: Order["status"]) => void;
-addFeedback: (
-  productId: string,
-  rating: number,
-  comment: string
-) => Promise<void>;
+  addFeedback: (
+    productId: string,
+    rating: number,
+    comment: string
+  ) => Promise<void>;
+
+  toggleWishlist: (productId: string) => void;
+  isInWishlist: (productId: string) => boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
 
   refetchAll: () => Promise<void>;
 }
@@ -105,9 +115,9 @@ const StoreContext = createContext<StoreContextType | null>(null);
 
 /* ===================== PROVIDER ===================== */
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-const [user, setUser] = useState<User | null>(null);
-const [users, setUsers] = useState<User[]>([]);
-const [authReady, setAuthReady] = useState(false); 
+  const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [authReady, setAuthReady] = useState(false);
 
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -117,6 +127,8 @@ const [authReady, setAuthReady] = useState(false);
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [appliedVoucherId, setAppliedVoucherId] = useState<string>();
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   /* ===================== LOAD USER FROM STORAGE ===================== */
   useEffect(() => {
@@ -126,46 +138,55 @@ const [authReady, setAuthReady] = useState(false);
 
   /* ===================== REFETCH ALL ===================== */
   const refetchAll = async () => {
-  try {
-    const [
-      productsData,
-      usersData,
-      ordersData,
-      offersData,
-      vouchersData,
-    ] = await Promise.all([
-      getProducts(),
-      getUsers(),
-      getOrders(),
-      getOffers(),
-      getVouchers(),
-    ]);
+    try {
+      const [
+        productsData,
+        usersData,
+        ordersData,
+        offersData,
+        vouchersData,
+      ] = await Promise.all([
+        getProducts(),
+        getUsers(),
+        getOrders(),
+        getOffers(),
+        getVouchers(),
+      ]);
 
-    setProducts(productsData);
-    setUsers(usersData);
-    setOrders(ordersData);
-    setOffers(offersData);
-    setVouchers(vouchersData);
+      setProducts(productsData);
+      setUsers(usersData);
+      setOrders(ordersData);
+      setOffers(offersData);
+      setVouchers(vouchersData);
 
-    // ✅ SYNC USER TỪ API
-    setUser(prev => {
-      if (!prev) return null;
-      const fresh = usersData.find(u => u.id === prev.id);
-      if (!fresh) return null;
+      // ✅ SYNC USER TỪ API
+      setUser((prev: User | null) => {
+        if (!prev) return null;
+        const fresh = usersData.find((u: User) => u.id === prev.id);
+        if (!fresh) return null;
 
-      localStorage.setItem("auth_user", JSON.stringify(fresh));
-      return fresh;
-    });
-  } finally {
-    // ✅ AUTH READY CHỈ SET SAU KHI DATA ĐÃ LOAD
-    setAuthReady(true);
-  }
-};
+        localStorage.setItem("auth_user", JSON.stringify(fresh));
+        return fresh;
+      });
+    } finally {
+      // ✅ AUTH READY CHỈ SET SAU KHI DATA ĐÃ LOAD
+      setAuthReady(true);
+    }
+  };
 
 
   useEffect(() => {
     refetchAll();
   }, []);
+
+  // Load wishlist from user data
+  useEffect(() => {
+    if (user) {
+      setWishlist(user.wishlist || []);
+    } else {
+      setWishlist([]);
+    }
+  }, [user]);
 
   /* ===================== AUTH ===================== */
   const login = (email: string, role: "user" | "admin") => {
@@ -193,29 +214,29 @@ const [authReady, setAuthReady] = useState(false);
     localStorage.removeItem("auth_user");
   };
   const updateUser = async (id: string, data: Partial<User>) => {
-  const current = users.find(u => u.id === id);
-  if (!current) return;
+    const current = users.find(u => u.id === id);
+    if (!current) return;
 
-  const updatedUser: User = {
-    ...current,   
-    ...data,
-  };
+    const updatedUser: User = {
+      ...current,
+      ...data,
+    };
 
-  await updateUserAPI(id, updatedUser);
+    await updateUserAPI(id, updatedUser);
 
-  // update store
-setUsers(prev => prev.map(u => (u.id === user.id ? updatedUser : u)));
+    // update store
+    setUsers(prev => prev.map(u => (u.id === user.id ? updatedUser : u)));
 
-setUser(updatedUser);
-localStorage.setItem("auth_user", JSON.stringify(updatedUser));
-  // sync auth user
-  if (user?.id === id) {
     setUser(updatedUser);
     localStorage.setItem("auth_user", JSON.stringify(updatedUser));
-  }
+    // sync auth user
+    if (user?.id === id) {
+      setUser(updatedUser);
+      localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+    }
 
-  toast.success("User updated");
-};
+    toast.success("User updated");
+  };
 
   /* ===================== CART (SAFE) ===================== */
   useEffect(() => {
@@ -250,6 +271,8 @@ localStorage.setItem("auth_user", JSON.stringify(updatedUser));
     if (!user) return toast.error("Login first");
     await addToCartAPI(user.id, product, quantity, priceOverride);
     await refetchAll();
+    setIsCartOpen(true); // Auto-open cart sidebar
+    toast.success(`Added ${product.name} to cart`);
   };
 
   const removeFromCart = async (productId: string) => {
@@ -346,33 +369,33 @@ localStorage.setItem("auth_user", JSON.stringify(updatedUser));
     await refetchAll();
   };
   const addFeedback = async (
-  productId: string,
-  rating: number,
-  comment: string
-) => {
-  if (!user) return;
+    productId: string,
+    rating: number,
+    comment: string
+  ) => {
+    if (!user) return;
 
-  const product = products.find(p => p.id === productId);
-  if (!product) return;
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
 
-  const feedback = {
-    userId: user.id,
-    userName: user.name,
-    rating,
-    comment,
-    date: new Date().toISOString(),
+    const feedback = {
+      userId: user.id,
+      userName: user.name,
+      rating,
+      comment,
+      date: new Date().toISOString(),
+    };
+
+    const updatedProduct = {
+      ...product,
+      feedbacks: [...(product.feedbacks || []), feedback],
+    };
+
+    await updateProductAPI(productId, updatedProduct);
+    await refetchAll();
+
+    toast.success("Review submitted");
   };
-
-  const updatedProduct = {
-    ...product,
-    feedbacks: [...(product.feedbacks || []), feedback],
-  };
-
-  await updateProductAPI(productId, updatedProduct);
-  await refetchAll();
-
-  toast.success("Review submitted");
-};
 
 
   /* ===================== PRODUCTS ===================== */
@@ -402,28 +425,61 @@ localStorage.setItem("auth_user", JSON.stringify(updatedUser));
     await refetchAll();
   };
 
-const deleteVoucher = async (id: string) => {
-  await deleteVoucherAPI(id);
+  const deleteVoucher = async (id: string) => {
+    await deleteVoucherAPI(id);
 
-  //CLEAN voucher khỏi user
-  const affectedUsers = users.filter(u => u.vouchers?.includes(id));
+    //CLEAN voucher khỏi user
+    const affectedUsers = users.filter(u => u.vouchers?.includes(id));
 
-  for (const u of affectedUsers) {
-    await updateUserAPI(u.id, {
-      ...u,
-      vouchers: u.vouchers.filter(v => v !== id),
-    });
-  }
+    for (const u of affectedUsers) {
+      await updateUserAPI(u.id, {
+        ...u,
+        vouchers: u.vouchers.filter((v: string) => v !== id),
+      });
+    }
 
-  await refetchAll();
-  toast.success("Voucher deleted");
-};
+    await refetchAll();
+    toast.success("Voucher deleted");
+  };
 
 
   const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
     await updateOrderStatusAPI(orderId, status);
     await refetchAll();
   };
+
+  /* ===================== WISHLIST ===================== */
+  const toggleWishlist = async (productId: string) => {
+    if (!user) {
+      toast.error("Please login to add to wishlist");
+      return;
+    }
+
+    try {
+      if (wishlist.includes(productId)) {
+        // Remove from wishlist
+        await removeFromWishlist(user.id, productId);
+        await refetchAll();
+        toast.success("Removed from wishlist");
+      } else {
+        // Add to wishlist
+        await addToWishlist(user.id, productId);
+        await refetchAll();
+        toast.success("Added to wishlist");
+      }
+    } catch (error) {
+      toast.error("Failed to update wishlist");
+    }
+  };
+
+  const isInWishlist = (productId: string) => {
+    return wishlist.includes(productId);
+  };
+
+  /* ===================== CART SIDEBAR ===================== */
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
+  const toggleCart = () => setIsCartOpen(prev => !prev);
 
   return (
     <StoreContext.Provider
@@ -438,6 +494,8 @@ const deleteVoucher = async (id: string) => {
         offers,
         vouchers,
         appliedVoucherId,
+        wishlist,
+        isCartOpen,
         setAppliedVoucherId,
         login,
         register,
@@ -458,7 +516,11 @@ const deleteVoucher = async (id: string) => {
         deleteVoucher,
         updateOrderStatus,
         addFeedback,
-
+        toggleWishlist,
+        isInWishlist,
+        openCart,
+        closeCart,
+        toggleCart,
         refetchAll,
       }}
     >

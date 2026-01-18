@@ -105,7 +105,6 @@ export default function Checkout() {
         if (!shippingData) return;
 
         checkout({
-            voucherId: appliedVoucherId,
             shippingAddress: shippingData,
             paymentMethod,
         });
