@@ -48,7 +48,14 @@ updateOrderStatus, updateUser
   } = useStore();
   const role = localStorage.getItem("userRole");
 
-  const [activeTab, setActiveTab] = useState("overview");
+// Giữ tab khi reload
+const [activeTab, setActiveTab] = useState(() => {
+  return localStorage.getItem("adminActiveTab") || "dashboard";
+});
+
+useEffect(() => {
+  localStorage.setItem("adminActiveTab", activeTab);
+}, [activeTab]);
 
   if (role !== "admin") return <Redirect to="/login" />;
 
