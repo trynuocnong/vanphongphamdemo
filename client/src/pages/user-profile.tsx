@@ -133,9 +133,11 @@ function VoucherCard({ voucher }: { voucher: any }) {
 }
 
 export default function UserProfile() {
-  const { user, vouchers, orders, offers, wishlist, toggleWishlist, products } =
+  const { user, setUser, vouchers, orders, offers, wishlist, toggleWishlist, products } =
     useStore();
   const [, setLocation] = useLocation();
+const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+
 
   if (!user) {
     setLocation("/login");
@@ -247,7 +249,12 @@ useEffect(() => {
     const userVouchers = vouchers.filter((v) => user.vouchers?.includes(v.id));
 
     // User statistics
-    const userOrders = orders.filter((o) => o.userId === user.id);
+const userOrders = orders
+  .filter((o) => o.userId === user.id)
+  .sort(
+    (a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
     const stats = {
         totalOrders: userOrders.length,
         completedOrders: userOrders.filter((o) => o.status === "completed").length,
@@ -825,9 +832,14 @@ setAddresses(addresses.filter((a) => a.id !== address.id));
                   <p>Loading offers...</p>
                 </div>
               ) : (() => {
-                const myOffers = offersData.filter(
-                  (o) => o.userId === user.id
-                );
+const myOffers = offersData
+  .filter((o) => o.userId === user.id)
+  .sort(
+    (a, b) =>
+      new Date(b.createdAt || b.date).getTime() -
+      new Date(a.createdAt || a.date).getTime()
+  );
+
                 if (myOffers.length === 0)
                   return (
                     <div className="text-center py-12 text-muted-foreground">
@@ -1134,57 +1146,82 @@ setAddresses(addresses.filter((a) => a.id !== address.id));
                         Collected
                       </Button>
 
-                      {/* GIFT TO FRIEND */}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" className="flex-1">
-                            Gift to Friend
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Gift Voucher</DialogTitle>
-                            <DialogDescription>
-                              Share this code with your friend! Once used, it disappears.
-                            </DialogDescription>
-                          </DialogHeader>
+<Dialog>
+  <DialogTrigger asChild>
+    <Button variant="outline" className="flex-1">
+      Gift to Friend
+    </Button>
+  </DialogTrigger>
 
-                          <div className="flex flex-col gap-3 items-center">
-                            <Button
-                              onClick={async () => {
-                                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Gift Voucher</DialogTitle>
+      <DialogDescription>
+        Generate a gift code and share it with your friend.
+      </DialogDescription>
+    </DialogHeader>
 
-                                // Save gift code
-                                await fetch(`http://localhost:3001/voucherGifts`, {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({
-                                    code,
-                                    voucherId: voucher.id,
-                                    fromUserId: user.id,
-                                  }),
-                                });
+    {/* CODE DISPLAY */}
+    {generatedCode ? (
+      <div className="space-y-4 text-center">
+        <div className="text-2xl font-mono font-bold tracking-widest bg-muted p-3 rounded-md">
+          {generatedCode}
+        </div>
 
-                                // Remove voucher from current user
-                                const updated = user.vouchers.filter((id: string) => id !== voucher.id);
-                                await fetch(`http://localhost:3001/users/${user.id}`, {
-                                  method: "PATCH",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ vouchers: updated }),
-                                });
+        <Button
+          onClick={async () => {
+            await navigator.clipboard.writeText(generatedCode);
+            toast.success("Code copied to clipboard!");
+          }}
+        >
+          Copy Code
+        </Button>
+      </div>
+    ) : (
+      <Button
+        onClick={async () => {
+          const code = Math.random()
+            .toString(36)
+            .substring(2, 8)
+            .toUpperCase();
 
-                                // ✅ Copy to clipboard
-                                await navigator.clipboard.writeText(code);
+          try {
+            // 1️⃣ Save gift code
+            await fetch(`http://localhost:3001/voucherGifts`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                code,
+                voucherId: voucher.id,
+                fromUserId: user.id,
+              }),
+            });
 
-                                toast.success(`Gift code generated & copied: ${code}`);
-                                setTimeout(() => window.location.reload(), 1000);
-                              }}
-                            >
-                              Generate & Copy Code
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+            // 2️⃣ Remove voucher khỏi user
+            const updated = user.vouchers.filter(
+              (id: string) => id !== voucher.id
+            );
+
+            await fetch(`http://localhost:3001/users/${user.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ vouchers: updated }),
+            });
+
+            setGeneratedCode(code);
+            toast.success("Gift code generated!");
+          } catch (err) {
+            console.error(err);
+            toast.error("Failed to generate code");
+          }
+        }}
+      >
+        Generate Code
+      </Button>
+    )}
+  </DialogContent>
+</Dialog>
+
                     </div>
                   ) : (
 <Button

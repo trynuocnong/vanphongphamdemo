@@ -108,7 +108,7 @@ const { cart, checkout, user, vouchers, appliedVoucherId, setAppliedVoucherId } 
   const handlePlaceOrder = () => {
     if (!shippingData) return;
     checkout({ shippingAddress: shippingData, paymentMethod });
-    navigate("/profile");
+navigate("/profile?tab=orders");
   };
 
   return (

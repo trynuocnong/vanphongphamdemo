@@ -1,24 +1,37 @@
 import { useStore } from "@/lib/store";
 import { Sparkles } from "lucide-react";
 import ProductCard from "@/components/product-card";
+import Pagination from "@/components/Pagination";
+import { usePagination } from "@/hooks/usePagination";
+
+const ITEMS_PER_PAGE = 12;
 
 export default function NewArrivals() {
   const { products } = useStore();
+  const { currentPage, setCurrentPage } = usePagination();
 
-  // ✨ Lọc theo sản phẩm mới hoặc có ngày tạo gần nhất
+  // ✨ Lọc & sắp xếp sản phẩm mới
   const newArrivals = products
     .filter((p) => !p.isDeleted && (p.isNew || p.createdAt))
-    .sort(
-      (a, b) =>
-        (b.isNew === a.isNew
-          ? new Date(b.createdAt || 0).getTime() -
-            new Date(a.createdAt || 0).getTime()
-          : b.isNew ? 1 : -1)
-    )
-    .slice(0, 12);
+    .sort((a, b) => {
+      if (a.isNew && !b.isNew) return -1;
+      if (!a.isNew && b.isNew) return 1;
+      return (
+        new Date(b.createdAt || 0).getTime() -
+        new Date(a.createdAt || 0).getTime()
+      );
+    });
+
+  const totalPages = Math.ceil(newArrivals.length / ITEMS_PER_PAGE);
+
+  const paginatedProducts = newArrivals.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Header */}
       <div className="mb-8 text-center">
         <div className="inline-flex items-center gap-2 mb-4">
           <Sparkles className="h-8 w-8 text-primary" />
@@ -31,11 +44,23 @@ export default function NewArrivals() {
         </p>
       </div>
 
+      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {newArrivals.map((product) => (
-          <ProductCard key={product.id} product={product} showNewBadge />
+        {paginatedProducts.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            showNewBadge
+          />
         ))}
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Search, Grid3x3, LayoutGrid } from "lucide-react";
 import ProductCard from "@/components/product-card";
 import ProductQuickView from "@/components/product-quick-view";
+import Pagination from "@/components/pagination"; // ✅ component chung
 import type { Product } from "@/lib/mockData";
+
+const PAGE_SIZE = 12;
 
 export default function Collections() {
   const { products, categories } = useStore();
@@ -22,15 +25,23 @@ export default function Collections() {
   const [sortBy, setSortBy] = useState("default");
   const [viewMode, setViewMode] = useState<"grid" | "large">("grid");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
-  const [location] = useLocation();
 
-  // ✅ Load categories từ URL query param
+  const [location, setLocation] = useLocation();
+
+  /* =======================
+     PAGINATION STATE
+  ======================= */
+  const url = new URL(window.location.href);
+  const initialPage = Number(url.searchParams.get("page")) || 1;
+  const [currentPage, setCurrentPage] = useState(initialPage);
+
+  /* =======================
+     LOAD CATEGORY FROM URL
+  ======================= */
   useEffect(() => {
-    if (!categories || categories.length === 0) return;
+    if (!categories.length) return;
 
-    const url = new URL(window.location.href);
     const categoryParam = url.searchParams.get("category");
-
     if (!categoryParam) {
       setSelectedCategory("all");
       return;
@@ -40,45 +51,76 @@ export default function Collections() {
     setSelectedCategory(exists ? categoryParam : "all");
   }, [location, categories]);
 
-  // ✅ Lọc sản phẩm đang hoạt động
-  const activeProducts = products.filter((p) => !p.isDeleted);
+  /* =======================
+     FILTER + SORT
+  ======================= */
+  const filteredProducts = useMemo(() => {
+    let result = products.filter((p) => !p.isDeleted);
 
-  // ✅ Tìm kiếm theo tên
-  let filteredProducts = activeProducts.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    if (searchTerm.trim()) {
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
 
-  // ✅ Lọc theo category
-  if (selectedCategory !== "all") {
-    filteredProducts = filteredProducts.filter(
-      (p) => p.categoryId === selectedCategory
-    );
-  }
+    if (selectedCategory !== "all") {
+      result = result.filter((p) => p.categoryId === selectedCategory);
+    }
 
-  // ✅ Sắp xếp
-  if (sortBy === "price-low") {
-    filteredProducts.sort((a, b) => a.price - b.price);
-  } else if (sortBy === "price-high") {
-    filteredProducts.sort((a, b) => b.price - a.price);
-  } else if (sortBy === "name") {
-    filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
-} else if (sortBy === "newest") {
-  filteredProducts.sort((a, b) => {
-    // Ưu tiên isNew = true đứng trước
-    if (a.isNew && !b.isNew) return -1;
-    if (!a.isNew && b.isNew) return 1;
+    switch (sortBy) {
+      case "price-low":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "name":
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "newest":
+        result.sort((a, b) => {
+          if (a.isNew && !b.isNew) return -1;
+          if (!a.isNew && b.isNew) return 1;
+          return (
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime()
+          );
+        });
+        break;
+    }
 
-    // Sau đó sắp xếp theo ngày tạo (mới hơn lên trước)
-    const dateA = new Date(a.createdAt || 0).getTime();
-    const dateB = new Date(b.createdAt || 0).getTime();
-    return dateB - dateA;
-  });
-}
+    return result;
+  }, [products, searchTerm, selectedCategory, sortBy]);
 
+  /* =======================
+     RESET PAGE WHEN FILTER CHANGES
+  ======================= */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, sortBy]);
+
+  /* =======================
+     PAGINATION LOGIC
+  ======================= */
+  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredProducts.slice(start, start + PAGE_SIZE);
+  }, [filteredProducts, currentPage]);
+
+  /* =======================
+     SYNC PAGE TO URL
+  ======================= */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("page", String(currentPage));
+    setLocation(`/collections?${params.toString()}`, { replace: true });
+  }, [currentPage]);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
+      {/* ================= HEADER ================= */}
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-3 bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
           {selectedCategory === "all"
@@ -90,7 +132,7 @@ export default function Collections() {
         </p>
       </div>
 
-      {/* Filters */}
+      {/* ================= FILTERS ================= */}
       <div className="mb-8 space-y-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
@@ -104,18 +146,10 @@ export default function Collections() {
             />
           </div>
 
-          {/* Category Filter */}
-          <Select
-            value={selectedCategory}
-            onValueChange={setSelectedCategory}
-            disabled={categories.length === 0}
-          >
+          {/* Category */}
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue>
-                {selectedCategory === "all"
-                  ? "All Categories"
-                  : categories.find((c) => c.id === selectedCategory)?.name || "All Categories"}
-              </SelectValue>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
@@ -141,7 +175,7 @@ export default function Collections() {
             </SelectContent>
           </Select>
 
-          {/* View Mode Toggle */}
+          {/* View mode */}
           <div className="flex gap-2">
             <Button
               variant={viewMode === "grid" ? "default" : "outline"}
@@ -159,58 +193,45 @@ export default function Collections() {
             </Button>
           </div>
         </div>
-
-        {/* Results count */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <p>
-            Showing {filteredProducts.length} of {activeProducts.length} products
-          </p>
-          {(searchTerm || selectedCategory !== "all") && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("all");
-              }}
-            >
-              Clear filters
-            </Button>
-          )}
-        </div>
       </div>
 
-      {/* Products Grid */}
+      {/* ================= PRODUCTS GRID ================= */}
       {filteredProducts.length === 0 ? (
         <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-            <Search className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-xl font-semibold mb-2">No products found</h3>
-          <p className="text-muted-foreground mb-4">
-            Try adjusting your search or filters
-          </p>
+          <Search className="w-8 h-8 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-xl font-semibold">No products found</h3>
         </div>
       ) : (
-        <div
-          className={`grid gap-6 ${
-            viewMode === "grid"
-              ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          }`}
-        >
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onQuickView={setQuickViewProduct}
-              showNewBadge={product.isNew}
+        <>
+          <div
+            className={`grid gap-6 ${
+              viewMode === "grid"
+                ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
+            {paginatedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onQuickView={setQuickViewProduct}
+                showNewBadge={product.isNew}
+              />
+            ))}
+          </div>
+
+          {/* ✅ PAGINATION */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
             />
-          ))}
-        </div>
+          )}
+        </>
       )}
 
-      {/* Quick View Modal */}
+      {/* ================= QUICK VIEW ================= */}
       <ProductQuickView
         product={quickViewProduct}
         isOpen={!!quickViewProduct}

@@ -208,10 +208,15 @@ export default function ProductDetail() {
     }
   };
 
-  const displayImages =
-    product.images && product.images.length > 0
-      ? product.images
-      : [product.image];
+const rawImages =
+  product.images && product.images.length > 0
+    ? product.images
+    : [product.image];
+
+// nếu ảnh ít → nhân đôi để embla cho scroll
+const displayImages =
+  rawImages.length <= 4 ? [...rawImages, ...rawImages] : rawImages;
+
 
   const averageRating =
     product.feedbacks?.length > 0
@@ -224,28 +229,39 @@ export default function ProductDetail() {
       {/* === Product Image & Info === */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div className="space-y-4">
-          <Carousel setApi={setCarouselApi} className="w-full">
+<Carousel
+  setApi={setCarouselApi}
+  opts={{ loop: true }}
+  className="w-full"
+>
             <CarouselContent>
-              {displayImages.map((img: string, index: number) => (
-                <CarouselItem key={index}>
-                  <div className="aspect-square bg-muted rounded-lg overflow-hidden border relative">
-                    <img src={img} alt={`${product.name}`} className="w-full h-full object-cover" />
-                    {product.stock <= 0 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-white text-2xl font-bold border-2 border-white px-4 py-2">
-                          OUT OF STOCK
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="left-4" />
-            <CarouselNext className="right-4" />
+  {displayImages.map((img: string, index: number) => (
+    <CarouselItem key={`${img}-${index}`}>
+      <div className="aspect-square bg-muted rounded-lg overflow-hidden border relative">
+        <img
+          src={img}
+          alt={`${product.name}-${index}`}
+          className="w-full h-full object-cover"
+        />
+        {product.stock <= 0 && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <span className="text-white text-2xl font-bold border-2 border-white px-4 py-2">
+              OUT OF STOCK
+            </span>
+          </div>
+        )}
+      </div>
+    </CarouselItem>
+  ))}
+</CarouselContent>
+
+<CarouselPrevious className="left-4" />
+<CarouselNext className="right-4" />
+
           </Carousel>
-          <div className="grid grid-cols-4 gap-4">
-            {displayImages.map((img, i) => (
+<div className="grid grid-cols-4 gap-4">
+  {rawImages.map((img, i) => (
+
               <div
                 key={i}
                 onClick={() => {

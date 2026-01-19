@@ -100,12 +100,14 @@ export default function ProductCard({
                         </motion.div>
 
                         {/* Quick Actions - Show on Hover */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 20 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute bottom-3 left-3 right-3 flex gap-2"
-                        >
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 20 }}
+  transition={{ duration: 0.2 }}
+  className={`absolute bottom-3 left-3 right-3 flex gap-2 
+    ${isHovered ? "pointer-events-auto" : "pointer-events-none"}`}
+>
+
                             {product.stock > 0 && (
                                 <Button
                                     className="flex-1 shadow-lg"

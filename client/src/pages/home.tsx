@@ -8,6 +8,8 @@ import ProductQuickView from "@/components/product-quick-view";
 import type { Product } from "@/lib/mockData";
 import { useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
+import ProductCarouselSection from "@/components/ProductCarouselSection";
+
 
 export default function Home() {
   const { products } = useStore();
@@ -27,28 +29,28 @@ export default function Home() {
   }, [searchTerm, activeProducts]);
 
   // 🔥 Bán chạy nhất
-  const bestsellers = useMemo(() => {
-    return [...activeProducts]
-      .filter((p) => p.sold > 0)
-      .sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0))
-      .slice(0, 4);
-  }, [activeProducts]);
+const bestsellers = useMemo(() => {
+  return [...activeProducts]
+    .filter((p) => p.sold > 0)
+    .sort((a, b) => (b.sold ?? 0) - (a.sold ?? 0));
+}, [activeProducts]);
+
 
   // 🆕 Sản phẩm mới (isNew === true)
-  const newArrivals = useMemo(() => {
-    return activeProducts.filter((p) => p.isNew).slice(0, 4);
-  }, [activeProducts]);
+const newArrivals = useMemo(() => {
+  return activeProducts.filter((p) => p.isNew);
+}, [activeProducts]);
+
 
   // 💸 Giảm giá (isSale === true)
-  const onSale = useMemo(() => {
-    return activeProducts
-      .filter(
-        (p) =>
-          p.isSale === true ||
-          (p.originalPrice && p.originalPrice > p.price)
-      )
-      .slice(0, 4);
-  }, [activeProducts]);
+const onSale = useMemo(() => {
+  return activeProducts.filter(
+    (p) =>
+      p.isSale === true ||
+      (p.originalPrice && p.originalPrice > p.price)
+  );
+}, [activeProducts]);
+
 
   return (
     <div className="space-y-16 pb-16">
@@ -147,27 +149,25 @@ export default function Home() {
       ) : (
         <>
           {bestsellers.length > 0 && (
-            <ProductSection
-              title="🔥 Bestsellers"
-              products={bestsellers}
-              onQuickView={setQuickViewProduct}
-              showRanking
-            />
+<ProductCarouselSection
+  title="🔥 Bestsellers"
+  products={bestsellers}
+  onQuickView={setQuickViewProduct}
+/>
           )}
           {newArrivals.length > 0 && (
-            <ProductSection
-              title="🆕 New Arrivals"
-              products={newArrivals}
-              onQuickView={setQuickViewProduct}
-              showNewBadge
-            />
+<ProductCarouselSection
+  title="🆕 New Arrivals"
+  products={newArrivals}
+  onQuickView={setQuickViewProduct}
+/>
           )}
           {onSale.length > 0 && (
-            <ProductSection
-              title="💸 On Sale"
-              products={onSale}
-              onQuickView={setQuickViewProduct}
-            />
+<ProductCarouselSection
+  title="💸 On Sale"
+  products={onSale}
+  onQuickView={setQuickViewProduct}
+/>
           )}
         </>
       )}
